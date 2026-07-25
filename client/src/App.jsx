@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+import logo from "./assets/logo.png";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Wardrobe from "./pages/Wardrobe.jsx";
@@ -20,7 +21,10 @@ function Nav() {
 
   return (
     <nav className="nav">
-      <Link className="nav__brand" to="/wardrobe">PackRat</Link>
+      <Link className="nav__brand" to="/wardrobe">
+        <img className="nav__logo" src={logo} alt="" />
+        PackRat
+      </Link>
       <div className="nav__links">
         <Link to="/wardrobe">Wardrobe</Link>
         <Link to="/trips">Trips</Link>

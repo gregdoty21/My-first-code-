@@ -92,7 +92,11 @@ authRouter.post("/login", async (req, res) => {
 });
 
 authRouter.post("/logout", (req, res) => {
-  res.clearCookie(COOKIE_NAME, cookieOptions());
+  // clearCookie needs the same sameSite/secure attributes to actually clear
+  // the cookie, but not maxAge — Express deprecated that here since clearing
+  // already implies an immediate expiry.
+  const { maxAge, ...clearOptions } = cookieOptions();
+  res.clearCookie(COOKIE_NAME, clearOptions);
   res.status(204).end();
 });
 

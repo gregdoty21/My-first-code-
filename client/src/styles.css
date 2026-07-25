@@ -69,10 +69,19 @@ input, select {
 }
 
 .nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 800;
   font-size: 1.25rem;
   color: var(--accent);
   text-decoration: none;
+}
+
+.nav__logo {
+  width: 2.25rem;
+  height: 2.25rem;
+  object-fit: contain;
 }
 
 .nav__links {
