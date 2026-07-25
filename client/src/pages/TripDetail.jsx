@@ -329,7 +329,7 @@ export default function TripDetail() {
 
       <aside className="trip-detail-sidebar">
         <div className="style-guide-panel">
-          <h2>What people wear there</h2>
+          <h2>Travel essentials</h2>
           {!styleGuide ? (
             <p>Researching style tips…</p>
           ) : (

@@ -31,7 +31,7 @@ function WeatherCard({ name, weather, styleGuide }) {
 
       {styleGuide && (styleGuide.climateNote || styleGuide.culturalNotes.length > 0 || styleGuide.items.length > 0) && (
         <div className="weather-card__style">
-          <h4>What's commonly worn</h4>
+          <h4>Travel essentials</h4>
           {styleGuide.climateNote && <p className="style-guide-panel__note">{styleGuide.climateNote}</p>}
           {styleGuide.culturalNotes.map((note, i) => (
             <p className="style-guide-panel__note style-guide-panel__note--cultural" key={i}>{note}</p>

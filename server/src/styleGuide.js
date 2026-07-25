@@ -9,60 +9,57 @@ function shopSearch(query) {
 }
 
 const CLIMATE_NOTES = {
-  warm: "Warm-weather travel calls for breathable natural fabrics (linen, cotton) in a few mix-and-match neutral colors, plus one dressier piece for evenings.",
-  cold: "Cold-weather travel is about layering: a thermal base layer, a warm mid-layer, and a weather-resistant outer layer, so you can adjust through the day.",
-  "all-season": "Mixed or mild weather calls for versatile layers you can add or remove — a packable jacket and comfortable walking shoes cover most days.",
+  warm: "Strong sun calls for real UV protection — broad-spectrum sunscreen, sunglasses that block 100% of UVA/UVB, and something to soothe skin after a day outside.",
+  cold: "Cold, dry air, wind, and indoor heating all pull moisture out of skin fast — a richer moisturizer and lip balm matter, and sunglasses/SPF are still worth packing since snow and altitude reflect a lot of UV.",
+  "all-season": "A daily moisturizer with SPF and a pair of sunglasses cover most mixed-weather days — dermatologists recommend SPF daily regardless of season or cloud cover.",
 };
 
 const CLIMATE_ITEMS = {
   warm: [
-    { label: "Lightweight linen or cotton top", query: "women's linen top" },
-    { label: "Breathable trousers or shorts", query: "women's linen trousers" },
-    { label: "Sundress", query: "women's sundress" },
-    { label: "Comfortable walking sandals", query: "women's leather walking sandals" },
-    { label: "Wide-brim sun hat", query: "women's sun hat" },
-    { label: "Lightweight scarf (doubles as a sun or shoulder cover)", query: "lightweight silk travel scarf" },
+    { label: "Broad-spectrum SPF 30+ sunscreen", query: "broad spectrum SPF 50 sunscreen" },
+    { label: "Daily facial moisturizer with SPF", query: "facial moisturizer with SPF" },
+    { label: "UV-blocking sunglasses", query: "women's UV protection sunglasses" },
+    { label: "After-sun aloe vera gel", query: "after sun aloe vera gel" },
+    { label: "SPF lip balm", query: "SPF lip balm" },
+    { label: "Insect repellent", query: "travel size insect repellent" },
   ],
   cold: [
-    { label: "Thermal base layers", query: "women's thermal base layer" },
-    { label: "Wool or fleece sweater", query: "women's merino wool sweater" },
-    { label: "Weather-resistant coat", query: "women's waterproof winter coat" },
-    { label: "Insulated waterproof boots", query: "women's insulated winter boots" },
-    { label: "Warm hat, gloves, and scarf", query: "women's winter hat gloves scarf set" },
-    { label: "Wool or thermal socks", query: "women's wool hiking socks" },
+    { label: "Rich, ceramide-based face moisturizer", query: "rich ceramide face moisturizer" },
+    { label: "Lip balm", query: "lip balm beeswax" },
+    { label: "Hand cream", query: "travel size hand cream" },
+    { label: "Sunglasses (snow glare)", query: "women's sunglasses" },
+    { label: "SPF facial moisturizer (snow/altitude UV)", query: "facial moisturizer with SPF" },
+    { label: "Hydrating face mist", query: "travel size hydrating face mist" },
   ],
   "all-season": [
-    { label: "Versatile layering top", query: "women's lightweight layering top" },
-    { label: "Packable light jacket", query: "women's packable jacket" },
-    { label: "Comfortable walking shoes", query: "women's comfortable walking shoes" },
-    { label: "Travel-friendly trousers", query: "women's travel trousers" },
+    { label: "Daily moisturizer with SPF", query: "facial moisturizer with SPF" },
+    { label: "Sunglasses", query: "women's sunglasses" },
+    { label: "Lip balm", query: "lip balm" },
+    { label: "Travel-size hand sanitizer", query: "travel size hand sanitizer" },
   ],
 };
 
 const ACTIVITY_ITEMS = {
   Beach: [
-    { label: "Swimsuit", query: "women's swimsuit" },
-    { label: "Swim cover-up", query: "women's swim cover up" },
+    { label: "Waterproof sunscreen SPF 50", query: "waterproof sunscreen SPF 50" },
+    { label: "Aloe vera after-sun gel", query: "aloe vera after sun gel" },
   ],
   "Fancy Dining": [
-    { label: "Elevated dinner dress", query: "women's dinner dress" },
-    { label: "Dressy sandals or heels", query: "women's dressy sandals" },
+    { label: "Travel-size makeup setting spray", query: "travel size makeup setting spray" },
   ],
   "Business/Work": [
-    { label: "Blazer", query: "women's blazer" },
-    { label: "Tailored trousers", query: "women's tailored trousers" },
-    { label: "Loafers or flats", query: "women's loafers" },
+    { label: "Travel-size hand cream", query: "travel size hand cream" },
   ],
   Hiking: [
-    { label: "Moisture-wicking layers", query: "women's moisture wicking hiking shirt" },
-    { label: "Hiking shoes or trail sneakers", query: "women's hiking shoes" },
+    { label: "Insect repellent", query: "insect repellent" },
+    { label: "Blister balm", query: "blister prevention balm" },
   ],
   "Outdoor/Adventure": [
-    { label: "Moisture-wicking layers", query: "women's moisture wicking activewear" },
-    { label: "Sturdy trainers", query: "women's trail running shoes" },
+    { label: "Insect repellent", query: "insect repellent" },
+    { label: "SPF lip balm", query: "SPF lip balm" },
   ],
   Nightlife: [
-    { label: "Going-out top", query: "women's going out top" },
+    { label: "Travel-size makeup remover wipes", query: "travel size makeup remover wipes" },
   ],
 };
 
