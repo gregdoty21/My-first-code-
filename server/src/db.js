@@ -77,9 +77,28 @@ export async function initSchema() {
       CHECK (image_path IS NOT NULL OR image_url IS NOT NULL)
     );
 
+    CREATE TABLE IF NOT EXISTS tryon_photos (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      photo_path TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS tryon_results (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      tryon_photo_id INTEGER NOT NULL REFERENCES tryon_photos(id) ON DELETE CASCADE,
+      wardrobe_item_id INTEGER NOT NULL REFERENCES wardrobe_items(id) ON DELETE CASCADE,
+      result_image_path TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE INDEX IF NOT EXISTS idx_wardrobe_user ON wardrobe_items(user_id);
     CREATE INDEX IF NOT EXISTS idx_trips_user ON trips(user_id);
     CREATE INDEX IF NOT EXISTS idx_packing_trip ON packing_items(trip_id);
     CREATE INDEX IF NOT EXISTS idx_inspiration_trip ON inspiration_images(trip_id);
+    CREATE INDEX IF NOT EXISTS idx_tryon_photos_user ON tryon_photos(user_id);
+    CREATE INDEX IF NOT EXISTS idx_tryon_results_user ON tryon_results(user_id);
+    CREATE INDEX IF NOT EXISTS idx_tryon_results_photo ON tryon_results(tryon_photo_id);
   `);
 }

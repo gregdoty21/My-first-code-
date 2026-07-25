@@ -25,6 +25,10 @@ This is **Phase 1** of a larger vision (see Roadmap below).
   get more outfits.
 - **Packing list** — add suggested items, outfit pairings, or custom items,
   check them off, track progress against your suitcase size.
+- **Rat's Assistance** — upload a photo of yourself and virtually try on a
+  piece from your wardrobe, powered by Google's Gemini image model. Optional:
+  the rest of the app works without it, this feature just shows a friendly
+  message until a `GEMINI_API_KEY` is configured (see Deployment below).
 
 ## Stack
 
@@ -73,6 +77,7 @@ All optional for local dev; sensible defaults are used.
 | `CLIENT_ORIGIN` | server | `http://localhost:5173` | Allowed CORS origin for the login cookie |
 | `NODE_ENV` | server | unset | Set to `production` when deployed — changes the login cookie's settings to work across two separate domains |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | server | unset | Enables cloud photo storage; falls back to local disk if unset |
+| `GEMINI_API_KEY` | server | unset | Enables Rat's Assistance (virtual try-on); without it, that page shows a "not set up" message instead |
 | `VITE_API_URL` | client | `http://localhost:4000` | Backend URL the frontend calls |
 
 ## Deploying it for free (a real web address)
@@ -96,6 +101,12 @@ this — it's all clicking through each site's dashboard.
 You don't need to create any tables or storage buckets yourself — the app
 creates its database tables and photo storage bucket automatically the first
 time it starts up.
+
+**Optional — Rat's Assistance (virtual try-on):** get a free API key at
+[aistudio.google.com/apikey](https://aistudio.google.com/apikey) and set it as
+`GEMINI_API_KEY` (step 3 below). Each generated try-on image costs roughly
+$0.04, billed to whichever Google account owns the key — skip this if you'd
+rather not enable it; the rest of the app works fine without it.
 
 ### 2. Deploy to Render
 
@@ -149,6 +160,9 @@ sleeps or redeploys.
 - **Phase 3** — AI matching between inspiration images and your own wardrobe
   photos, so a saved outfit look gets mapped to the closest pieces you
   actually own. Needs a vision-capable AI API key to build.
+- **Rat's Assistance (done)** — single-photo virtual try-on via Gemini. A
+  future version could support a multi-angle "360" try-on and a live
+  Pinterest connection — deferred for now as bigger, costlier builds.
 
 ## Notes
 

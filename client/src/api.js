@@ -56,6 +56,14 @@ export const api = {
 
   getPopularWeather: () => apiFetch("/api/weather/popular"),
   searchWeather: (query) => apiFetch(`/api/weather/search?q=${encodeURIComponent(query)}`),
+
+  getTryonConfig: () => apiFetch("/api/tryon/configured"),
+  listTryonPhotos: () => apiFetch("/api/tryon/photos"),
+  addTryonPhoto: (formData) => apiFetch("/api/tryon/photos", { method: "POST", body: formData }),
+  deleteTryonPhoto: (id) => apiFetch(`/api/tryon/photos/${id}`, { method: "DELETE" }),
+  listTryonResults: () => apiFetch("/api/tryon/results"),
+  generateTryon: (body) => apiFetch("/api/tryon/generate", { method: "POST", body: JSON.stringify(body) }),
+  deleteTryonResult: (id) => apiFetch(`/api/tryon/results/${id}`, { method: "DELETE" }),
 };
 
 export function photoUrl(path) {

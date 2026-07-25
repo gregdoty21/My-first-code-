@@ -6,6 +6,7 @@ import Register from "./pages/Register.jsx";
 import Wardrobe from "./pages/Wardrobe.jsx";
 import Trips from "./pages/Trips.jsx";
 import TripDetail from "./pages/TripDetail.jsx";
+import TryOn from "./pages/TryOn.jsx";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -28,6 +29,7 @@ function Nav() {
       <div className="nav__links">
         <Link to="/wardrobe">Wardrobe</Link>
         <Link to="/trips">Trips</Link>
+        <Link to="/try-on">Rat's Assistance</Link>
       </div>
       <div className="nav__user">
         <span>{user.name}</span>
@@ -75,6 +77,14 @@ export default function App() {
             element={
               <Protected>
                 <TripDetail />
+              </Protected>
+            }
+          />
+          <Route
+            path="/try-on"
+            element={
+              <Protected>
+                <TryOn />
               </Protected>
             }
           />

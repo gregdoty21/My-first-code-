@@ -613,4 +613,103 @@ input, select {
 .outfit-pairing__bottom span { display: block; padding: 0.3rem 0.4rem; font-size: 0.72rem; }
 
 .outfit-dresses { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* Rat's Assistance (virtual try-on) --------------------------------------- */
+
+.tryon-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.tryon-section h2 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.tryon-section__hint { margin: 0 0 0.9rem; font-size: 0.82rem; color: var(--text-muted); }
+
+.tryon-upload-form {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.tryon-upload-form button {
+  padding: 0.55rem 1rem;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 0;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.tryon-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.75rem;
+}
+.tryon-photo {
+  position: relative;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: none;
+  cursor: pointer;
+}
+.tryon-photo--selected { border-color: var(--accent); }
+.tryon-photo img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; background: var(--bg); }
+.tryon-photo__remove {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.2rem;
+  font-size: 0.7rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.tryon-photo:hover .tryon-photo__remove { opacity: 1; }
+
+.tryon-generate-form {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.tryon-generate-form select {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.tryon-generate-form button {
+  padding: 0.55rem 1rem;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 0;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.tryon-generate-form button:disabled { opacity: 0.55; cursor: default; }
+
+.tryon-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 1rem;
+}
+.tryon-result-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.tryon-result-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: var(--surface); }
+.tryon-result-card__body { padding: 0.6rem 0.7rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.tryon-result-card__body h3 { margin: 0; font-size: 0.9rem; }
 .outfit-dresses h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }
