@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth } from "./auth.js";
 import { getTripWeather } from "../weather.js";
+import { getStyleGuide } from "../styleGuide.js";
 import {
   ACTIVITIES,
   SUITCASE_SIZES,
@@ -119,35 +120,26 @@ tripsRouter.delete("/:id", async (req, res) => {
   res.status(204).end();
 });
 
-tripsRouter.get("/:id/weather", async (req, res) => {
-  const trip = await getOwnedTrip(req, res);
-  if (!trip) return;
+// Shared by /suggestions, /outfits, and /style-guide: best-effort season
+// (warm/cold/null) inferred from the trip's weather.
+async function getTargetSeason(trip) {
   try {
     const weather = await getTripWeather(trip.destination, trip.start_date, trip.end_date);
-    res.json(weather);
-  } catch (err) {
-    // "Unavailable" is an expected, handled app state (bad destination, weather
-    // service down, network hiccup) — not a server error — so respond 200 and
-    // let the client branch on `available` like it does for every other case.
-    res.json({ available: false, reason: "Couldn't reach the weather service right now" });
+    if (weather.available) {
+      if (weather.avgHighC >= 24) return "warm"; // ~75°F
+      if (weather.avgHighC <= 13) return "cold"; // ~55°F
+    }
+  } catch {
+    // Weather is best-effort here; fall through with no season filter.
   }
-});
+  return null;
+}
 
 // Shared by /suggestions and /outfits: which of the user's wardrobe items fit
 // this trip's weather and planned activities.
 async function getTripRelevantItems(userId, trip) {
   const activities = trip.activities;
-
-  let targetSeason = null;
-  try {
-    const weather = await getTripWeather(trip.destination, trip.start_date, trip.end_date);
-    if (weather.available) {
-      if (weather.avgHighF >= 75) targetSeason = "warm";
-      else if (weather.avgHighF <= 55) targetSeason = "cold";
-    }
-  } catch {
-    // Weather is best-effort here; fall through with no season filter.
-  }
+  const targetSeason = await getTargetSeason(trip);
 
   const desiredFormality = new Set();
   const desiredCategories = new Set();
@@ -195,4 +187,11 @@ tripsRouter.get("/:id/outfits", async (req, res) => {
     .sort((a, b) => b.bottoms.length - a.bottoms.length);
 
   res.json({ targetSeason, pairings, dresses });
+});
+
+tripsRouter.get("/:id/style-guide", async (req, res) => {
+  const trip = await getOwnedTrip(req, res);
+  if (!trip) return;
+  const targetSeason = await getTargetSeason(trip);
+  res.json(getStyleGuide(trip.destination, targetSeason, trip.activities));
 });

@@ -4,6 +4,34 @@ import { api } from "../api.js";
 
 const emptyForm = { name: "", destination: "", start_date: "", end_date: "", activities: [], suitcase_size: "" };
 
+function WeatherCard({ name, weather }) {
+  return (
+    <div className="weather-card">
+      <h3>{name}</h3>
+      {!weather.available ? (
+        <p className="empty">{weather.reason}</p>
+      ) : (
+        <>
+          <div className="weather-stat">
+            <span className="weather-stat__label">Avg high / low</span>
+            <span className="weather-stat__value">{weather.avgHighC}° / {weather.avgLowC}°C</span>
+          </div>
+          <div className="weather-stat">
+            <span className="weather-stat__label">UV index</span>
+            <span className="weather-stat__value">
+              {weather.avgUvIndex != null ? `${weather.avgUvIndex} (${weather.uvLabel})` : "—"}
+            </span>
+          </div>
+          <div className="weather-stat">
+            <span className="weather-stat__label">Precipitation</span>
+            <span className="weather-stat__value">{weather.precipLabel || "—"}</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Trips() {
   const navigate = useNavigate();
   const [meta, setMeta] = useState(null);
@@ -12,6 +40,11 @@ export default function Trips() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [popularWeather, setPopularWeather] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchBusy, setSearchBusy] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
     Promise.all([api.meta(), api.listTrips()])
@@ -22,7 +55,26 @@ export default function Trips() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    api.getPopularWeather().then(setPopularWeather).catch(() => setPopularWeather([]));
   }, []);
+
+  async function handleWeatherSearch(e) {
+    e.preventDefault();
+    setSearchError("");
+    if (!searchQuery.trim()) return;
+    setSearchBusy(true);
+    try {
+      const result = await api.searchWeather(searchQuery.trim());
+      setSearchResult(result);
+      if (!result.weather.available) setSearchError(result.weather.reason);
+    } catch (err) {
+      setSearchError(err.message);
+      setSearchResult(null);
+    } finally {
+      setSearchBusy(false);
+    }
+  }
 
   function toggleActivity(activity) {
     setForm((f) => ({
@@ -139,6 +191,41 @@ export default function Trips() {
           ))}
         </ul>
       )}
+
+      <section className="weather-explorer">
+        <header className="page-header">
+          <h2>Weather explorer</h2>
+          <p>Browse popular destinations or search any place to help pick where to go.</p>
+        </header>
+
+        <form className="weather-explorer__search" onSubmit={handleWeatherSearch}>
+          <input
+            type="text"
+            placeholder="Search any city or country"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button type="submit" disabled={searchBusy}>{searchBusy ? "Searching…" : "Search"}</button>
+        </form>
+        {searchError && <p className="form-error">{searchError}</p>}
+
+        {searchResult && (
+          <div className="weather-grid weather-grid--result">
+            <WeatherCard name={searchResult.name} weather={searchResult.weather} />
+          </div>
+        )}
+
+        <h3 className="weather-explorer__subheading">Popular destinations</h3>
+        {!popularWeather ? (
+          <p>Loading popular destinations…</p>
+        ) : (
+          <div className="weather-grid">
+            {popularWeather.map((entry) => (
+              <WeatherCard key={entry.name} name={entry.name} weather={entry.weather} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

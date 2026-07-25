@@ -383,18 +383,21 @@ input, select {
 .trip-detail-sidebar {
   position: sticky;
   top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.weather-panel {
+.style-guide-panel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1rem;
 }
-.weather-panel h2 { margin: 0 0 0.5rem; font-size: 1rem; }
-.weather-panel__kind { margin: 0 0 0.75rem; font-size: 0.8rem; color: var(--text-muted); }
+.style-guide-panel h2 { margin: 0 0 0.5rem; font-size: 1rem; }
 
+/* Shared by the weather explorer cards (Trips page). */
 .weather-stat {
   display: flex;
   justify-content: space-between;
@@ -406,6 +409,83 @@ input, select {
 .weather-stat:first-of-type { border-top: 0; }
 .weather-stat__label { font-size: 0.8rem; color: var(--text-muted); }
 .weather-stat__value { font-weight: 600; text-align: right; }
+
+/* Weather explorer (Trips page) ---------------------------------------------------------- */
+
+.weather-explorer { margin-top: 2rem; }
+
+.weather-explorer__search {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.weather-explorer__search input {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: inherit;
+}
+.weather-explorer__search button {
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.weather-explorer__subheading { margin: 1.25rem 0 0.75rem; font-size: 1rem; }
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 1rem;
+}
+.weather-grid--result { margin-bottom: 0.5rem; }
+
+.weather-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 0.85rem 1rem;
+}
+.weather-card h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+
+.style-guide-panel__note {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.style-guide-panel__note--cultural {
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--accent);
+}
+
+.style-guide-panel__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.style-guide-panel__items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.style-guide-panel__items li:first-child { border-top: 0; }
+.style-guide-panel__items a {
+  flex: none;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
 
 @media (max-width: 60rem) {
   .trip-detail { grid-template-columns: 1fr; }

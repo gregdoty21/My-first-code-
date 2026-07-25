@@ -37,9 +37,9 @@ export const api = {
   getTrip: (id) => apiFetch(`/api/trips/${id}`),
   updateTrip: (id, body) => apiFetch(`/api/trips/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteTrip: (id) => apiFetch(`/api/trips/${id}`, { method: "DELETE" }),
-  getWeather: (id) => apiFetch(`/api/trips/${id}/weather`),
   getSuggestions: (id) => apiFetch(`/api/trips/${id}/suggestions`),
   getOutfits: (id) => apiFetch(`/api/trips/${id}/outfits`),
+  getStyleGuide: (id) => apiFetch(`/api/trips/${id}/style-guide`),
 
   listPacking: (tripId) => apiFetch(`/api/trips/${tripId}/packing`),
   addPacking: (tripId, body) => apiFetch(`/api/trips/${tripId}/packing`, { method: "POST", body: JSON.stringify(body) }),
@@ -53,6 +53,9 @@ export const api = {
       body: payload instanceof FormData ? payload : JSON.stringify(payload),
     }),
   deleteInspiration: (id) => apiFetch(`/api/inspiration/${id}`, { method: "DELETE" }),
+
+  getPopularWeather: () => apiFetch("/api/weather/popular"),
+  searchWeather: (query) => apiFetch(`/api/weather/search?q=${encodeURIComponent(query)}`),
 };
 
 export function photoUrl(path) {

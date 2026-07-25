@@ -2,23 +2,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, photoUrl } from "../api.js";
 
-// Standard EPA/WHO UV index scale.
-function uvLabel(uv) {
-  if (uv == null) return null;
-  if (uv < 3) return "Low";
-  if (uv < 6) return "Moderate";
-  if (uv < 8) return "High";
-  if (uv < 11) return "Very High";
-  return "Extreme";
-}
-
 export default function TripDetail() {
   const { id } = useParams();
   const [trip, setTrip] = useState(null);
   const [meta, setMeta] = useState(null);
-  const [weather, setWeather] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
   const [outfits, setOutfits] = useState(null);
+  const [styleGuide, setStyleGuide] = useState(null);
   const [packing, setPacking] = useState([]);
   const [customName, setCustomName] = useState("");
   const [inspiration, setInspiration] = useState([]);
@@ -51,10 +41,6 @@ export default function TripDetail() {
       .finally(() => !cancelled && setLoading(false));
 
     api
-      .getWeather(id)
-      .then((w) => !cancelled && setWeather(w))
-      .catch((err) => !cancelled && setWeather({ available: false, reason: err.message }));
-    api
       .getSuggestions(id)
       .then((s) => !cancelled && setSuggestions(s))
       .catch(() => !cancelled && setSuggestions({ targetSeason: null, suggested: [] }));
@@ -62,6 +48,10 @@ export default function TripDetail() {
       .getOutfits(id)
       .then((o) => !cancelled && setOutfits(o))
       .catch(() => !cancelled && setOutfits({ targetSeason: null, pairings: [], dresses: [] }));
+    api
+      .getStyleGuide(id)
+      .then((g) => !cancelled && setStyleGuide(g))
+      .catch(() => !cancelled && setStyleGuide({ climateNote: null, items: [], culturalNotes: [] }));
 
     return () => {
       cancelled = true;
@@ -338,40 +328,26 @@ export default function TripDetail() {
       </div>
 
       <aside className="trip-detail-sidebar">
-        <div className="weather-panel">
-          <h2>Weather</h2>
-          {!weather ? (
-            <p>Loading weather…</p>
-          ) : !weather.available ? (
-            <p className="empty">{weather.reason}</p>
+        <div className="style-guide-panel">
+          <h2>What people wear there</h2>
+          {!styleGuide ? (
+            <p>Researching style tips…</p>
           ) : (
             <>
-              <p className="weather-panel__kind">
-                {weather.kind === "typical"
-                  ? "Typical, based on last year (this trip is further out)"
-                  : "Forecast"}
-                {" "}for {weather.location}
-              </p>
-              <div className="weather-stat">
-                <span className="weather-stat__label">Avg high / low</span>
-                <span className="weather-stat__value">{weather.avgHighF}° / {weather.avgLowF}°F</span>
-              </div>
-              <div className="weather-stat">
-                <span className="weather-stat__label">UV index</span>
-                <span className="weather-stat__value">
-                  {weather.avgUvIndex != null ? `${weather.avgUvIndex} (${uvLabel(weather.avgUvIndex)})` : "—"}
-                </span>
-              </div>
-              <div className="weather-stat">
-                <span className="weather-stat__label">Precipitation</span>
-                <span className="weather-stat__value">
-                  {weather.maxPrecipChance != null
-                    ? `up to ${weather.maxPrecipChance}% chance`
-                    : weather.totalPrecipMm != null
-                      ? `${weather.totalPrecipMm}mm total last year`
-                      : "—"}
-                </span>
-              </div>
+              {styleGuide.climateNote && <p className="style-guide-panel__note">{styleGuide.climateNote}</p>}
+              {styleGuide.culturalNotes.map((note, i) => (
+                <p className="style-guide-panel__note style-guide-panel__note--cultural" key={i}>{note}</p>
+              ))}
+              {styleGuide.items.length > 0 && (
+                <ul className="style-guide-panel__items">
+                  {styleGuide.items.map((item) => (
+                    <li key={item.label}>
+                      <span>{item.label}</span>
+                      <a href={item.shopUrl} target="_blank" rel="noopener noreferrer">Shop similar</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </>
           )}
         </div>
