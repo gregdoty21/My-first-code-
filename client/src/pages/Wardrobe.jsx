@@ -60,90 +60,118 @@ export default function Wardrobe() {
 
   if (loading) return <p className="page-loading">Loading your wardrobe…</p>;
 
+  const recentItems = items.slice(0, 8);
+
   return (
     <div className="wardrobe-page">
-      <header className="page-header">
-        <h1>Your wardrobe</h1>
-        <p>Photograph what you own so trips can pull real outfits from your own closet.</p>
-      </header>
+      <div className="wardrobe-page__main">
+        <header className="page-header">
+          <h1>Your wardrobe</h1>
+          <p>Photograph what you own so trips can pull real outfits from your own closet.</p>
+        </header>
 
-      <form className="wardrobe-form" onSubmit={handleSubmit}>
-        <label className="file-upload" htmlFor="wardrobe-photo">
-          {file ? file.name : "Take a photo of your clothes"}
-        </label>
-        <input
-          id="wardrobe-photo"
-          className="visually-hidden"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Item name (e.g. Blue linen shirt)"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          required
-        />
-        <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+        <form className="wardrobe-form" onSubmit={handleSubmit}>
+          <label className="file-upload" htmlFor="wardrobe-photo">
+            {file ? file.name : "Take a photo of your clothes"}
+          </label>
+          <input
+            id="wardrobe-photo"
+            className="visually-hidden"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Item name (e.g. Blue linen shirt)"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+          />
+          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            {meta.categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="Color (optional)"
+            value={form.color}
+            onChange={(e) => setForm({ ...form, color: e.target.value })}
+          />
+          <select value={form.season} onChange={(e) => setForm({ ...form, season: e.target.value })}>
+            {meta.seasons.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <select value={form.formality} onChange={(e) => setForm({ ...form, formality: e.target.value })}>
+            {meta.formality.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+          <button type="submit" disabled={busy}>{busy ? "Adding…" : "Add to wardrobe"}</button>
+        </form>
+
+        {error && <p className="form-error">{error}</p>}
+
+        <div className="filters">
+          <button className={filter === "" ? "chip chip--active" : "chip"} onClick={() => setFilter("")}>All</button>
           {meta.categories.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="Color (optional)"
-          value={form.color}
-          onChange={(e) => setForm({ ...form, color: e.target.value })}
-        />
-        <select value={form.season} onChange={(e) => setForm({ ...form, season: e.target.value })}>
-          {meta.seasons.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select value={form.formality} onChange={(e) => setForm({ ...form, formality: e.target.value })}>
-          {meta.formality.map((f) => (
-            <option key={f} value={f}>{f}</option>
-          ))}
-        </select>
-        <button type="submit" disabled={busy}>{busy ? "Adding…" : "Add to wardrobe"}</button>
-      </form>
-
-      {error && <p className="form-error">{error}</p>}
-
-      <div className="filters">
-        <button className={filter === "" ? "chip chip--active" : "chip"} onClick={() => setFilter("")}>All</button>
-        {meta.categories.map((c) => (
-          <button key={c} className={filter === c ? "chip chip--active" : "chip"} onClick={() => setFilter(c)}>
-            {c}
-          </button>
-        ))}
-      </div>
-
-      {visibleItems.length === 0 ? (
-        <p className="empty">
-          {items.length === 0 ? "No items yet — add your first piece above." : "No items in this category yet."}
-        </p>
-      ) : (
-        <div className="wardrobe-grid">
-          {visibleItems.map((item) => (
-            <article className="wardrobe-card" key={item.id}>
-              <img src={photoUrl(item.photo_path)} alt={item.name} />
-              <div className="wardrobe-card__body">
-                <h3>{item.name}</h3>
-                <p className="wardrobe-card__tags">
-                  {item.category} · {item.color || "no color"} · {item.season} · {item.formality}
-                </p>
-                <button type="button" className="link-button" onClick={() => handleDelete(item.id)}>
-                  Remove
-                </button>
-              </div>
-            </article>
+            <button key={c} className={filter === c ? "chip chip--active" : "chip"} onClick={() => setFilter(c)}>
+              {c}
+            </button>
           ))}
         </div>
-      )}
+
+        {visibleItems.length === 0 ? (
+          <p className="empty">
+            {items.length === 0 ? "No items yet — add your first piece above." : "No items in this category yet."}
+          </p>
+        ) : (
+          <div className="wardrobe-grid">
+            {visibleItems.map((item) => (
+              <article className="wardrobe-card" key={item.id}>
+                <img src={photoUrl(item.photo_path)} alt={item.name} />
+                <div className="wardrobe-card__body">
+                  <h3>{item.name}</h3>
+                  <p className="wardrobe-card__tags">
+                    {item.category} · {item.color || "no color"} · {item.season} · {item.formality}
+                  </p>
+                  <button type="button" className="link-button" onClick={() => handleDelete(item.id)}>
+                    Remove
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <aside className="wardrobe-sidebar">
+        <h2>Recently added</h2>
+        {recentItems.length === 0 ? (
+          <p className="empty">Nothing added yet.</p>
+        ) : (
+          <ul className="wardrobe-sidebar__list">
+            {recentItems.map((item) => (
+              <li className="wardrobe-sidebar__item" key={item.id}>
+                <img src={photoUrl(item.photo_path)} alt={item.name} />
+                <div>
+                  <h3>{item.name}</h3>
+                  <dl className="wardrobe-sidebar__details">
+                    <div><dt>Category</dt><dd>{item.category}</dd></div>
+                    <div><dt>Color</dt><dd>{item.color || "—"}</dd></div>
+                    <div><dt>Season</dt><dd>{item.season}</dd></div>
+                    <div><dt>Formality</dt><dd>{item.formality}</dd></div>
+                  </dl>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </aside>
     </div>
   );
 }
