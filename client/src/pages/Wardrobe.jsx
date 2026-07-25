@@ -68,7 +68,12 @@ export default function Wardrobe() {
       </header>
 
       <form className="wardrobe-form" onSubmit={handleSubmit}>
+        <label className="file-upload" htmlFor="wardrobe-photo">
+          {file ? file.name : "Take a photo of your clothes"}
+        </label>
         <input
+          id="wardrobe-photo"
+          className="visually-hidden"
           type="file"
           accept="image/*"
           capture="environment"

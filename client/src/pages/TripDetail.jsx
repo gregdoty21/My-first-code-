@@ -173,7 +173,12 @@ export default function TripDetail() {
             onChange={(e) => setInspoUrl(e.target.value)}
           />
           <span className="inspiration-form__or">or</span>
+          <label className="file-upload" htmlFor="inspiration-photo">
+            {inspoFile ? inspoFile.name : "Upload a photo"}
+          </label>
           <input
+            id="inspiration-photo"
+            className="visually-hidden"
             type="file"
             accept="image/*"
             onChange={(e) => setInspoFile(e.target.files?.[0] || null)}
