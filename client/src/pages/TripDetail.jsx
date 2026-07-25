@@ -207,7 +207,7 @@ export default function TripDetail() {
                 <img src={photoUrl(item.photo_path)} alt={item.name} />
                 <div className="wardrobe-card__body">
                   <h3>{item.name}</h3>
-                  <p className="wardrobe-card__tags">{item.category} · {item.formality}</p>
+                  <p className="wardrobe-card__tags">{item.type || item.category} · {item.formality}</p>
                   <button
                     type="button"
                     disabled={packedIds.has(item.id)}

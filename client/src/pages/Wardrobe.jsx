@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, photoUrl } from "../api.js";
 
-const emptyForm = { name: "", category: "", color: "", season: "all-season", formality: "casual" };
+const emptyForm = { name: "", category: "", type: "", color: "", season: "all-season", formality: "casual" };
 
 export default function Wardrobe() {
   const [meta, setMeta] = useState(null);
@@ -90,9 +90,18 @@ export default function Wardrobe() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
           />
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value, type: "" })}
+          >
             {meta.categories.map((c) => (
               <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+            <option value="">Type (optional)</option>
+            {(meta.subcategories[form.category] || []).map((t) => (
+              <option key={t} value={t}>{t}</option>
             ))}
           </select>
           <input
@@ -137,7 +146,7 @@ export default function Wardrobe() {
                 <div className="wardrobe-card__body">
                   <h3>{item.name}</h3>
                   <p className="wardrobe-card__tags">
-                    {item.category} · {item.color || "no color"} · {item.season} · {item.formality}
+                    {item.type || item.category} · {item.color || "no color"} · {item.season} · {item.formality}
                   </p>
                   <button type="button" className="link-button" onClick={() => handleDelete(item.id)}>
                     Remove
@@ -162,9 +171,10 @@ export default function Wardrobe() {
                   <h3>{item.name}</h3>
                   <dl className="wardrobe-sidebar__details">
                     <div><dt>Category</dt><dd>{item.category}</dd></div>
+                    {item.type && <div><dt>Type</dt><dd>{item.type}</dd></div>}
                     <div><dt>Color</dt><dd>{item.color || "—"}</dd></div>
                     <div><dt>Season</dt><dd>{item.season}</dd></div>
-                    <div><dt>Formality</dt><dd>{item.formality}</dd></div>
+                    <div><dt>Style</dt><dd>{item.formality}</dd></div>
                   </dl>
                 </div>
               </li>

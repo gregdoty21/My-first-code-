@@ -11,9 +11,40 @@ export const CATEGORIES = [
   "Other",
 ];
 
+// Specific garment types within each category — optional, more precise
+// tagging than the broad category alone (e.g. a "Tops" item might be a
+// blouse, a button-up, or a going-out top). Keyed by category so the
+// frontend can show only the types relevant to whatever category is picked.
+export const SUBCATEGORIES = {
+  Tops: [
+    "T-shirt",
+    "Tank top",
+    "Camisole",
+    "Blouse",
+    "Button-up shirt",
+    "Polo shirt",
+    "Crop top",
+    "Going-out top",
+    "Sweater",
+    "Hoodie/Sweatshirt",
+    "Other top",
+  ],
+  Bottoms: ["Jeans", "Shorts", "Skirt", "Trousers/Pants", "Leggings", "Joggers", "Other bottom"],
+  Dresses: ["Mini dress", "Midi dress", "Maxi dress", "Sundress", "Cocktail dress", "Wrap dress", "Other dress"],
+  Outerwear: ["Jacket", "Coat", "Blazer", "Cardigan", "Vest", "Other outerwear"],
+  Shoes: ["Sneakers", "Sandals", "Heels", "Flats", "Boots", "Other shoes"],
+  Accessories: ["Bag", "Jewelry", "Belt", "Scarf", "Hat", "Sunglasses", "Other accessory"],
+  Swimwear: ["Bikini top", "Bikini bottom", "One-piece swimsuit", "Cover-up", "Board shorts", "Other swimwear"],
+  Activewear: ["Sports bra", "Athletic top", "Leggings", "Athletic shorts", "Tracksuit", "Other activewear"],
+  Sleepwear: ["Pajama top", "Pajama bottom", "Nightgown", "Robe", "Other sleepwear"],
+  Other: ["Other"],
+};
+
 export const SEASONS = ["warm", "cold", "all-season"];
 
-export const FORMALITY = ["casual", "business", "formal"];
+// The occasion/vibe a piece is suited for — broader than just "how dressy",
+// since activewear and loungewear aren't really a formality level at all.
+export const FORMALITY = ["casual", "activewear", "loungewear", "business", "going-out", "formal"];
 
 export const ACTIVITIES = [
   "Walking",
@@ -34,18 +65,18 @@ export const SUITCASE_SIZES = [
   { id: "large-checked", label: "Large checked bag", guideline: 45 },
 ];
 
-// Which formality levels each activity calls for.
+// Which formality/style levels each activity calls for.
 export const ACTIVITY_FORMALITY = {
   Walking: ["casual"],
-  Hiking: ["casual"],
+  Hiking: ["casual", "activewear"],
   Sightseeing: ["casual"],
   Beach: ["casual"],
-  "Fancy Dining": ["formal"],
+  "Fancy Dining": ["formal", "going-out"],
   "Casual Dining": ["casual"],
   "Business/Work": ["business"],
-  Nightlife: ["business", "formal"],
-  "Outdoor/Adventure": ["casual"],
-  "Relaxing/Spa": ["casual"],
+  Nightlife: ["going-out", "business", "formal"],
+  "Outdoor/Adventure": ["casual", "activewear"],
+  "Relaxing/Spa": ["casual", "loungewear"],
 };
 
 // Activities that call out a specific wardrobe category regardless of formality.

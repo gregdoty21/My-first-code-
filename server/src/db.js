@@ -101,4 +101,10 @@ export async function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_tryon_results_user ON tryon_results(user_id);
     CREATE INDEX IF NOT EXISTS idx_tryon_results_photo ON tryon_results(tryon_photo_id);
   `);
+
+  // Added after the initial wardrobe_items table shipped, so it's a separate
+  // migration step rather than part of the CREATE TABLE above — existing
+  // deployments already have the table and CREATE TABLE IF NOT EXISTS is a
+  // no-op for them.
+  await pool.query(`ALTER TABLE wardrobe_items ADD COLUMN IF NOT EXISTS type TEXT`);
 }

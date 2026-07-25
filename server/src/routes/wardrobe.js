@@ -3,7 +3,7 @@ import multer from "multer";
 import { pool } from "../db.js";
 import { requireAuth } from "./auth.js";
 import { saveFile, deleteFile } from "../storage.js";
-import { CATEGORIES, SEASONS, FORMALITY } from "../constants.js";
+import { CATEGORIES, SUBCATEGORIES, SEASONS, FORMALITY } from "../constants.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -19,8 +19,9 @@ const upload = multer({
 export const wardrobeRouter = Router();
 wardrobeRouter.use(requireAuth);
 
-function validateTags({ category, season, formality }) {
+function validateTags({ category, type, season, formality }) {
   if (category && !CATEGORIES.includes(category)) return `Invalid category: ${category}`;
+  if (type && !(SUBCATEGORIES[category] || []).includes(type)) return `Invalid type "${type}" for category ${category}`;
   if (season && !SEASONS.includes(season)) return `Invalid season: ${season}`;
   if (formality && !FORMALITY.includes(formality)) return `Invalid formality: ${formality}`;
   return null;
@@ -43,23 +44,24 @@ wardrobeRouter.post("/", upload.single("photo"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "A photo is required" });
   }
-  const { name, category, color, season, formality } = req.body || {};
+  const { name, category, type, color, season, formality } = req.body || {};
   if (!name || !category) {
     return res.status(400).json({ error: "Name and category are required" });
   }
-  const error = validateTags({ category, season, formality });
+  const error = validateTags({ category, type, season, formality });
   if (error) return res.status(400).json({ error });
 
   const photoPath = await saveFile(req.file.buffer, req.file.originalname, req.file.mimetype);
 
   const result = await pool.query(
-    `INSERT INTO wardrobe_items (user_id, photo_path, name, category, color, season, formality)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    `INSERT INTO wardrobe_items (user_id, photo_path, name, category, type, color, season, formality)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
     [
       req.userId,
       photoPath,
       name.trim(),
       category,
+      type || null,
       (color || "").trim(),
       season || "all-season",
       formality || "casual",
@@ -77,16 +79,24 @@ wardrobeRouter.patch("/:id", async (req, res) => {
   const item = existing.rows[0];
   if (!item) return res.status(404).json({ error: "Item not found" });
 
-  const { name, category, color, season, formality } = req.body || {};
-  const error = validateTags({ category, season, formality });
+  const { name, category, type, color, season, formality } = req.body || {};
+
+  const mergedCategory = category || item.category;
+  // If the category is changing and no new type was given, the old type may
+  // no longer apply (e.g. "Bikini top" doesn't make sense once moved out of
+  // Swimwear) — drop it rather than carrying over a mismatched value.
+  const mergedType = type !== undefined ? type || null : category && category !== item.category ? null : item.type;
+
+  const error = validateTags({ category: mergedCategory, type: mergedType, season, formality });
   if (error) return res.status(400).json({ error });
 
   const result = await pool.query(
-    `UPDATE wardrobe_items SET name = $1, category = $2, color = $3, season = $4, formality = $5
-     WHERE id = $6 RETURNING *`,
+    `UPDATE wardrobe_items SET name = $1, category = $2, type = $3, color = $4, season = $5, formality = $6
+     WHERE id = $7 RETURNING *`,
     [
       name?.trim() || item.name,
-      category || item.category,
+      mergedCategory,
+      mergedType,
       color !== undefined ? color.trim() : item.color,
       season || item.season,
       formality || item.formality,
