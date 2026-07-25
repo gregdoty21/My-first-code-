@@ -52,7 +52,18 @@ db.exec(`
     CHECK (wardrobe_item_id IS NOT NULL OR custom_name IS NOT NULL)
   );
 
+  CREATE TABLE IF NOT EXISTS inspiration_images (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    image_path TEXT,
+    image_url TEXT,
+    caption TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    CHECK (image_path IS NOT NULL OR image_url IS NOT NULL)
+  );
+
   CREATE INDEX IF NOT EXISTS idx_wardrobe_user ON wardrobe_items(user_id);
   CREATE INDEX IF NOT EXISTS idx_trips_user ON trips(user_id);
   CREATE INDEX IF NOT EXISTS idx_packing_trip ON packing_items(trip_id);
+  CREATE INDEX IF NOT EXISTS idx_inspiration_trip ON inspiration_images(trip_id);
 `);

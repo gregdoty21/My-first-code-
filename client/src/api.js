@@ -44,6 +44,14 @@ export const api = {
   addPacking: (tripId, body) => apiFetch(`/api/trips/${tripId}/packing`, { method: "POST", body: JSON.stringify(body) }),
   togglePacking: (id, packed) => apiFetch(`/api/packing/${id}`, { method: "PATCH", body: JSON.stringify({ packed }) }),
   deletePacking: (id) => apiFetch(`/api/packing/${id}`, { method: "DELETE" }),
+
+  listInspiration: (tripId) => apiFetch(`/api/trips/${tripId}/inspiration`),
+  addInspiration: (tripId, payload) =>
+    apiFetch(`/api/trips/${tripId}/inspiration`, {
+      method: "POST",
+      body: payload instanceof FormData ? payload : JSON.stringify(payload),
+    }),
+  deleteInspiration: (id) => apiFetch(`/api/inspiration/${id}`, { method: "DELETE" }),
 };
 
 export function photoUrl(path) {

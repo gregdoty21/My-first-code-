@@ -291,3 +291,52 @@ input, select {
 .packing-item label { display: flex; align-items: center; gap: 0.6rem; }
 .packing-item--packed label { color: var(--text-muted); text-decoration: line-through; }
 .packing-item__tag { text-transform: capitalize; color: var(--text-muted); }
+
+/* Inspiration ---------------------------------------------------------- */
+
+.card__subtitle { margin: -0.5rem 0 1rem; color: var(--text-muted); font-size: 0.85rem; }
+
+.inspiration-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.inspiration-form input[type="url"],
+.inspiration-form input[type="text"] {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: inherit;
+}
+.inspiration-form input:disabled { opacity: 0.5; }
+.inspiration-form__or { color: var(--text-muted); font-size: 0.85rem; }
+.inspiration-form button {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.inspiration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 1rem;
+}
+.inspiration-card {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.inspiration-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: var(--bg); display: block; }
+.inspiration-card figcaption { padding: 0.5rem 0.6rem 0; font-size: 0.85rem; }
+.inspiration-card__remove { display: block; padding: 0.4rem 0.6rem 0.6rem; font-size: 0.8rem; }

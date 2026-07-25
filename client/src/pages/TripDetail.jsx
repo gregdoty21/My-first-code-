@@ -10,6 +10,12 @@ export default function TripDetail() {
   const [suggestions, setSuggestions] = useState(null);
   const [packing, setPacking] = useState([]);
   const [customName, setCustomName] = useState("");
+  const [inspiration, setInspiration] = useState([]);
+  const [inspoUrl, setInspoUrl] = useState("");
+  const [inspoCaption, setInspoCaption] = useState("");
+  const [inspoFile, setInspoFile] = useState(null);
+  const [inspoError, setInspoError] = useState("");
+  const [inspoBusy, setInspoBusy] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -17,10 +23,14 @@ export default function TripDetail() {
     return api.listPacking(id).then(setPacking);
   }, [id]);
 
+  const reloadInspiration = useCallback(() => {
+    return api.listInspiration(id).then(setInspiration);
+  }, [id]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([api.meta(), api.getTrip(id), reloadPacking()])
+    Promise.all([api.meta(), api.getTrip(id), reloadPacking(), reloadInspiration()])
       .then(([m, t]) => {
         if (cancelled) return;
         setMeta(m);
@@ -41,7 +51,7 @@ export default function TripDetail() {
     return () => {
       cancelled = true;
     };
-  }, [id, reloadPacking]);
+  }, [id, reloadPacking, reloadInspiration]);
 
   async function addFromWardrobe(itemId) {
     await api.addPacking(id, { wardrobe_item_id: itemId });
@@ -64,6 +74,40 @@ export default function TripDetail() {
   async function removePacked(item) {
     setPacking((prev) => prev.filter((p) => p.id !== item.id));
     await api.deletePacking(item.id);
+  }
+
+  async function addInspiration(e) {
+    e.preventDefault();
+    setInspoError("");
+    if (!inspoFile && !inspoUrl.trim()) {
+      setInspoError("Paste an image URL or choose a photo to upload.");
+      return;
+    }
+    setInspoBusy(true);
+    try {
+      if (inspoFile) {
+        const fd = new FormData();
+        fd.append("photo", inspoFile);
+        if (inspoCaption.trim()) fd.append("caption", inspoCaption.trim());
+        await api.addInspiration(id, fd);
+      } else {
+        await api.addInspiration(id, { image_url: inspoUrl.trim(), caption: inspoCaption.trim() });
+      }
+      setInspoUrl("");
+      setInspoCaption("");
+      setInspoFile(null);
+      e.target.reset();
+      await reloadInspiration();
+    } catch (err) {
+      setInspoError(err.message);
+    } finally {
+      setInspoBusy(false);
+    }
+  }
+
+  async function removeInspiration(item) {
+    setInspiration((prev) => prev.filter((i) => i.id !== item.id));
+    await api.deleteInspiration(item.id);
   }
 
   if (loading) return <p className="page-loading">Loading trip…</p>;
@@ -99,6 +143,53 @@ export default function TripDetail() {
               {" "}for {weather.location}: avg high {weather.avgHighF}°F, avg low {weather.avgLowF}°F
               {weather.maxPrecipChance != null && `, up to ${weather.maxPrecipChance}% chance of rain`}.
             </p>
+          </div>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Inspiration</h2>
+        <p className="card__subtitle">
+          Save looks you like for this trip — paste an image link (e.g. from Pinterest) or upload a photo.
+        </p>
+
+        <form className="inspiration-form" onSubmit={addInspiration}>
+          <input
+            type="url"
+            placeholder="Paste an image URL"
+            value={inspoUrl}
+            disabled={Boolean(inspoFile)}
+            onChange={(e) => setInspoUrl(e.target.value)}
+          />
+          <span className="inspiration-form__or">or</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setInspoFile(e.target.files?.[0] || null)}
+          />
+          <input
+            type="text"
+            placeholder="Caption (optional)"
+            value={inspoCaption}
+            onChange={(e) => setInspoCaption(e.target.value)}
+          />
+          <button type="submit" disabled={inspoBusy}>{inspoBusy ? "Saving…" : "Save to trip"}</button>
+        </form>
+        {inspoError && <p className="form-error">{inspoError}</p>}
+
+        {inspiration.length === 0 ? (
+          <p className="empty">No inspiration saved yet.</p>
+        ) : (
+          <div className="inspiration-grid">
+            {inspiration.map((item) => (
+              <figure className="inspiration-card" key={item.id}>
+                <img src={item.image_path ? photoUrl(item.image_path) : item.image_url} alt={item.caption || "Inspiration"} />
+                {item.caption && <figcaption>{item.caption}</figcaption>}
+                <button type="button" className="link-button inspiration-card__remove" onClick={() => removeInspiration(item)}>
+                  Remove
+                </button>
+              </figure>
+            ))}
           </div>
         )}
       </section>

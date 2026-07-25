@@ -8,6 +8,7 @@ import { authRouter } from "./routes/auth.js";
 import { wardrobeRouter } from "./routes/wardrobe.js";
 import { tripsRouter } from "./routes/trips.js";
 import { tripPackingRouter, packingItemRouter } from "./routes/packing.js";
+import { tripInspirationRouter, inspirationItemRouter } from "./routes/inspiration.js";
 import { metaRouter } from "./routes/meta.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -39,6 +40,8 @@ app.use("/api/wardrobe", wardrobeRouter);
 app.use("/api/trips", tripsRouter);
 app.use("/api/trips", tripPackingRouter);
 app.use("/api/packing", packingItemRouter);
+app.use("/api/trips", tripInspirationRouter);
+app.use("/api/inspiration", inspirationItemRouter);
 app.use("/api/meta", metaRouter);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
