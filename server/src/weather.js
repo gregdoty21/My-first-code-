@@ -52,14 +52,17 @@ export async function getTripWeather(destination, startDate, endDate) {
   const shared = {
     latitude: place.latitude,
     longitude: place.longitude,
-    daily: "temperature_2m_max,temperature_2m_min,precipitation_probability_max",
     temperature_unit: "fahrenheit",
     timezone: "auto",
   };
 
   if (withinForecastRange) {
+    // precipitation_probability_max is a forecast-only concept (from
+    // ensemble models) — the archive API below has no "probability" field,
+    // only actually-measured totals.
     const data = await fetchDaily("https://api.open-meteo.com/v1/forecast", {
       ...shared,
+      daily: "temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max",
       start_date: startDate,
       end_date: endDate,
     });
@@ -69,6 +72,7 @@ export async function getTripWeather(destination, startDate, endDate) {
   // Fall back to last year's actuals for the same calendar dates as an estimate.
   const data = await fetchDaily("https://archive-api.open-meteo.com/v1/archive", {
     ...shared,
+    daily: "temperature_2m_max,temperature_2m_min,precipitation_sum,uv_index_max",
     start_date: shiftYear(startDate, -1),
     end_date: shiftYear(endDate, -1),
   });
@@ -83,24 +87,33 @@ function summarize(place, data, kind) {
 
   const highs = daily.temperature_2m_max;
   const lows = daily.temperature_2m_min;
-  const rain = daily.precipitation_probability_max || [];
+  const rainChance = daily.precipitation_probability_max || null;
+  const rainSumMm = daily.precipitation_sum || null;
+  const uv = daily.uv_index_max || null;
 
-  const avgHigh = highs.reduce((a, b) => a + b, 0) / highs.length;
-  const avgLow = lows.reduce((a, b) => a + b, 0) / lows.length;
-  const maxRainChance = rain.length ? Math.max(...rain) : null;
+  const avg = (arr) => (arr && arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+  const round = (n) => (n == null ? null : Math.round(n));
+  const round1 = (n) => (n == null ? null : Math.round(n * 10) / 10);
 
   return {
     available: true,
     kind, // "forecast" | "typical"
     location: place.label,
-    avgHighF: Math.round(avgHigh),
-    avgLowF: Math.round(avgLow),
-    maxPrecipChance: maxRainChance,
+    avgHighF: round(avg(highs)),
+    avgLowF: round(avg(lows)),
+    // Forecast trips get a rain *chance* (%); typical/archive trips get an
+    // actual measured total (mm) from last year instead, since "probability"
+    // isn't a meaningful concept for historical data.
+    maxPrecipChance: rainChance ? Math.max(...rainChance) : null,
+    totalPrecipMm: rainSumMm ? round1(rainSumMm.reduce((a, b) => a + b, 0)) : null,
+    avgUvIndex: round1(avg(uv)),
     days: daily.time.map((date, i) => ({
       date,
-      highF: Math.round(highs[i]),
-      lowF: Math.round(lows[i]),
-      precipChance: rain[i] ?? null,
+      highF: round(highs[i]),
+      lowF: round(lows[i]),
+      precipChance: rainChance ? rainChance[i] ?? null : null,
+      precipMm: rainSumMm ? rainSumMm[i] ?? null : null,
+      uvIndex: uv ? uv[i] ?? null : null,
     })),
   };
 }

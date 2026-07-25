@@ -2,6 +2,16 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, photoUrl } from "../api.js";
 
+// Standard EPA/WHO UV index scale.
+function uvLabel(uv) {
+  if (uv == null) return null;
+  if (uv < 3) return "Low";
+  if (uv < 6) return "Moderate";
+  if (uv < 8) return "High";
+  if (uv < 11) return "Very High";
+  return "Extreme";
+}
+
 export default function TripDetail() {
   const { id } = useParams();
   const [trip, setTrip] = useState(null);
@@ -131,6 +141,7 @@ export default function TripDetail() {
 
   return (
     <div className="trip-detail">
+      <div className="trip-detail__main">
       <p><Link to="/trips">&larr; All trips</Link></p>
 
       <header className="page-header">
@@ -140,23 +151,6 @@ export default function TripDetail() {
           {suitcase?.label} · {trip.activities.join(", ") || "No activities selected"}
         </p>
       </header>
-
-      <section className="card">
-        <h2>Weather</h2>
-        {!weather ? (
-          <p>Loading weather…</p>
-        ) : !weather.available ? (
-          <p>{weather.reason}</p>
-        ) : (
-          <div>
-            <p>
-              {weather.kind === "typical" ? "Typical weather (based on last year, since this trip is further out)" : "Forecast"}
-              {" "}for {weather.location}: avg high {weather.avgHighF}°F, avg low {weather.avgLowF}°F
-              {weather.maxPrecipChance != null && `, up to ${weather.maxPrecipChance}% chance of rain`}.
-            </p>
-          </div>
-        )}
-      </section>
 
       <section className="card">
         <h2>Inspiration</h2>
@@ -341,6 +335,47 @@ export default function TripDetail() {
           </ul>
         )}
       </section>
+      </div>
+
+      <aside className="trip-detail-sidebar">
+        <div className="weather-panel">
+          <h2>Weather</h2>
+          {!weather ? (
+            <p>Loading weather…</p>
+          ) : !weather.available ? (
+            <p className="empty">{weather.reason}</p>
+          ) : (
+            <>
+              <p className="weather-panel__kind">
+                {weather.kind === "typical"
+                  ? "Typical, based on last year (this trip is further out)"
+                  : "Forecast"}
+                {" "}for {weather.location}
+              </p>
+              <div className="weather-stat">
+                <span className="weather-stat__label">Avg high / low</span>
+                <span className="weather-stat__value">{weather.avgHighF}° / {weather.avgLowF}°F</span>
+              </div>
+              <div className="weather-stat">
+                <span className="weather-stat__label">UV index</span>
+                <span className="weather-stat__value">
+                  {weather.avgUvIndex != null ? `${weather.avgUvIndex} (${uvLabel(weather.avgUvIndex)})` : "—"}
+                </span>
+              </div>
+              <div className="weather-stat">
+                <span className="weather-stat__label">Precipitation</span>
+                <span className="weather-stat__value">
+                  {weather.maxPrecipChance != null
+                    ? `up to ${weather.maxPrecipChance}% chance`
+                    : weather.totalPrecipMm != null
+                      ? `${weather.totalPrecipMm}mm total last year`
+                      : "—"}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      </aside>
     </div>
   );
 }
