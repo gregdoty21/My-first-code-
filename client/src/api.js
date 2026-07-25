@@ -64,6 +64,11 @@ export const api = {
   listTryonResults: () => apiFetch("/api/tryon/results"),
   generateTryon: (body) => apiFetch("/api/tryon/generate", { method: "POST", body: JSON.stringify(body) }),
   deleteTryonResult: (id) => apiFetch(`/api/tryon/results/${id}`, { method: "DELETE" }),
+
+  getProfile: () => apiFetch("/api/profile"),
+  updateProfile: (body) => apiFetch("/api/profile", { method: "PUT", body: JSON.stringify(body) }),
+  addProfilePhoto: (formData) => apiFetch("/api/profile/photos", { method: "POST", body: formData }),
+  deleteProfilePhoto: (id) => apiFetch(`/api/profile/photos/${id}`, { method: "DELETE" }),
 };
 
 export function photoUrl(path) {

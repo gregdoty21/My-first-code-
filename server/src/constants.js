@@ -85,3 +85,19 @@ export const ACTIVITY_CATEGORY = {
   Hiking: ["Activewear"],
   "Outdoor/Adventure": ["Activewear"],
 };
+
+// "My Fashion Profile" — lightweight personality/preference tags the user
+// picks about themselves, used to give the outfit builder a sense of who
+// they are beyond just wardrobe tags and trip activities.
+export const INTERESTS = [
+  "Active sports / fitness",
+  "Going out / nightlife",
+  "Relaxing at home",
+  "Traveling / adventure",
+  "Work / business",
+  "Creative / artsy",
+  "Foodie / dining",
+  "Beauty & self-care",
+];
+
+export const STYLE_VIBES = ["Casual", "Minimalist", "Classic", "Trendy", "Boho", "Edgy", "Sporty", "Glam"];

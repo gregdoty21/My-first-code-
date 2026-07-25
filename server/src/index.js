@@ -13,6 +13,7 @@ import { tripInspirationRouter, inspirationItemRouter } from "./routes/inspirati
 import { metaRouter } from "./routes/meta.js";
 import { weatherRouter } from "./routes/weather.js";
 import { tryonRouter } from "./routes/tryon.js";
+import { profileRouter } from "./routes/profile.js";
 import { uploadsDir, ensureBucket } from "./storage.js";
 
 const PORT = process.env.PORT || 4000;
@@ -38,6 +39,7 @@ app.use("/api/inspiration", inspirationItemRouter);
 app.use("/api/meta", metaRouter);
 app.use("/api/weather", weatherRouter);
 app.use("/api/tryon", tryonRouter);
+app.use("/api/profile", profileRouter);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

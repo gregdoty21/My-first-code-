@@ -26,10 +26,14 @@ The user's original ask, in full:
 > outfits on you.
 
 Built so far (all of the above except two items, see Roadmap in README.md):
-wardrobe catalog with rich tagging, trip planning, weather (popular
-destinations + search, on the Trips page), inspiration image folders,
-suggestions, outfit pairings, packing lists, single-photo AI virtual try-on
-("Rat's Assistance").
+wardrobe catalog with rich tagging (category + specific garment type +
+color/season/style), trip planning, weather (popular destinations + search,
+on the Trips page), inspiration image folders, suggestions, outfit pairings,
+packing lists, single-photo AI virtual try-on ("Rat's Assistance"), and a
+"My Fashion Profile" page (interests, style vibe, favorite colors/drink, bio,
+and a personal photo gallery) reachable from a settings dropdown in the nav.
+The profile isn't wired into suggestion/outfit logic yet — it's a data-
+collection step for a future personality-aware outfit builder.
 
 **Deferred (too advanced for now, listed for the user's future reference):**
 1. AI photo-to-closet matching (map a saved Pinterest look to the closest
@@ -108,20 +112,31 @@ suggestions, outfit pairings, packing lists, single-photo AI virtual try-on
 - **Deployment**: `render.yaml` Blueprint — two services, `pack-app-server`
   (Node) and `pack-app-client` (static site), one-click deploy. Supabase
   provides Postgres + Storage. Full beginner walkthrough is in `README.md`.
+- **My Fashion Profile** (`server/src/routes/profile.js`,
+  `client/src/pages/FashionProfile.jsx`): a `fashion_profiles` row (one per
+  user, created lazily on first `GET /api/profile`) holding `interests` and
+  `style_vibe` (both JSONB arrays, validated against `INTERESTS`/
+  `STYLE_VIBES` in constants.js), plus free-text `favorite_colors`,
+  `favorite_drink`, and `bio`. A separate `profile_photos` table (same
+  upload pattern as wardrobe/tryon photos) holds a personal photo gallery.
+  Reached via a settings dropdown in the nav (`.nav__settings-menu` in
+  `App.jsx`), which also now hosts "Sign out" (moved out of the main nav
+  bar). Not yet consumed by any suggestion/outfit logic — that wiring is
+  future work, not built yet.
 
 ## Key files map
 
 | File | Purpose |
 |---|---|
 | `server/src/db.js` | Pool config + `initSchema()` (all tables + migrations) |
-| `server/src/constants.js` | `CATEGORIES`, `SUBCATEGORIES` (per-category garment types), `SEASONS`, `FORMALITY` (style tags), `ACTIVITIES`, `ACTIVITY_FORMALITY`, `ACTIVITY_CATEGORY`, `SUITCASE_SIZES` |
+| `server/src/constants.js` | `CATEGORIES`, `SUBCATEGORIES` (per-category garment types), `SEASONS`, `FORMALITY` (style tags), `ACTIVITIES`, `ACTIVITY_FORMALITY`, `ACTIVITY_CATEGORY`, `SUITCASE_SIZES`, `INTERESTS`, `STYLE_VIBES` |
 | `server/src/storage.js` | Local disk vs. Supabase Storage abstraction |
 | `server/src/weather.js` | Open-Meteo lookups, Celsius, UV/precip labels |
 | `server/src/styleGuide.js` | Sunscreen/accessory suggestions + cultural notes |
 | `server/src/gemini.js` | Gemini virtual try-on client |
-| `server/src/routes/*.js` | One router file per resource (auth, wardrobe, trips, packing, inspiration, weather, meta, tryon) |
+| `server/src/routes/*.js` | One router file per resource (auth, wardrobe, trips, packing, inspiration, weather, meta, tryon, profile) |
 | `client/src/api.js` | All frontend↔backend fetch calls in one place |
-| `client/src/pages/*.jsx` | One page per route (Login, Register, Wardrobe, Trips, TripDetail, TryOn) |
+| `client/src/pages/*.jsx` | One page per route (Login, Register, Wardrobe, Trips, TripDetail, TryOn, FashionProfile) |
 | `client/src/styles.css` | All CSS, organized by section with comments |
 | `render.yaml` | Render Blueprint (both services + env var list) |
 | `README.md` | User-facing setup/deployment guide + roadmap |

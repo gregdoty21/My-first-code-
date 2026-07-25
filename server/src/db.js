@@ -93,6 +93,25 @@ export async function initSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS fashion_profiles (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      interests JSONB NOT NULL DEFAULT '[]'::jsonb,
+      style_vibe JSONB NOT NULL DEFAULT '[]'::jsonb,
+      favorite_colors TEXT,
+      favorite_drink TEXT,
+      bio TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS profile_photos (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      photo_path TEXT NOT NULL,
+      caption TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE INDEX IF NOT EXISTS idx_wardrobe_user ON wardrobe_items(user_id);
     CREATE INDEX IF NOT EXISTS idx_trips_user ON trips(user_id);
     CREATE INDEX IF NOT EXISTS idx_packing_trip ON packing_items(trip_id);
@@ -100,6 +119,7 @@ export async function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_tryon_photos_user ON tryon_photos(user_id);
     CREATE INDEX IF NOT EXISTS idx_tryon_results_user ON tryon_results(user_id);
     CREATE INDEX IF NOT EXISTS idx_tryon_results_photo ON tryon_results(tryon_photo_id);
+    CREATE INDEX IF NOT EXISTS idx_profile_photos_user ON profile_photos(user_id);
   `);
 
   // Added after the initial wardrobe_items table shipped, so it's a separate

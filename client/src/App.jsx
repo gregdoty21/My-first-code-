@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import logo from "./assets/logo.png";
@@ -7,6 +8,7 @@ import Wardrobe from "./pages/Wardrobe.jsx";
 import Trips from "./pages/Trips.jsx";
 import TripDetail from "./pages/TripDetail.jsx";
 import TryOn from "./pages/TryOn.jsx";
+import FashionProfile from "./pages/FashionProfile.jsx";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -18,6 +20,17 @@ function Protected({ children }) {
 function Nav() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (!user) return null;
 
   return (
@@ -31,18 +44,25 @@ function Nav() {
         <Link to="/trips">Trips</Link>
         <Link to="/try-on">Rat's Assistance</Link>
       </div>
-      <div className="nav__user">
-        <span>{user.name}</span>
-        <button
-          type="button"
-          className="link-button"
-          onClick={async () => {
-            await logout();
-            navigate("/login");
-          }}
-        >
-          Sign out
+      <div className="nav__settings" ref={menuRef}>
+        <button type="button" className="nav__settings-trigger" onClick={() => setMenuOpen((o) => !o)}>
+          {user.name}
+          <span className="nav__settings-caret" aria-hidden="true">⚙</span>
         </button>
+        {menuOpen && (
+          <div className="nav__settings-menu">
+            <Link to="/profile" onClick={() => setMenuOpen(false)}>My Fashion Profile</Link>
+            <button
+              type="button"
+              onClick={async () => {
+                await logout();
+                navigate("/login");
+              }}
+            >
+              Sign out
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );
@@ -85,6 +105,14 @@ export default function App() {
             element={
               <Protected>
                 <TryOn />
+              </Protected>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <Protected>
+                <FashionProfile />
               </Protected>
             }
           />

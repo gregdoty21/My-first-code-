@@ -29,6 +29,11 @@ This is **Phase 1** of a larger vision (see Roadmap below).
   piece from your wardrobe, powered by Google's Gemini image model. Optional:
   the rest of the app works without it, this feature just shows a friendly
   message until a `GEMINI_API_KEY` is configured (see Deployment below).
+- **My Fashion Profile** — a settings page (via the dropdown next to your
+  name in the nav) where you can tag your interests and style vibe, note a
+  favorite drink/colors, write a short bio, and add photos that help capture
+  your personality — laying the groundwork for a future personality-aware
+  outfit builder.
 
 ## Stack
 
