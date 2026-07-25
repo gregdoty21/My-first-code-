@@ -4,7 +4,7 @@ import { api } from "../api.js";
 
 const emptyForm = { name: "", destination: "", start_date: "", end_date: "", activities: [], suitcase_size: "" };
 
-function WeatherCard({ name, weather }) {
+function WeatherCard({ name, weather, styleGuide }) {
   return (
     <div className="weather-card">
       <h3>{name}</h3>
@@ -28,6 +28,26 @@ function WeatherCard({ name, weather }) {
           </div>
         </>
       )}
+
+      {styleGuide && (styleGuide.climateNote || styleGuide.culturalNotes.length > 0 || styleGuide.items.length > 0) && (
+        <div className="weather-card__style">
+          <h4>What's commonly worn</h4>
+          {styleGuide.climateNote && <p className="style-guide-panel__note">{styleGuide.climateNote}</p>}
+          {styleGuide.culturalNotes.map((note, i) => (
+            <p className="style-guide-panel__note style-guide-panel__note--cultural" key={i}>{note}</p>
+          ))}
+          {styleGuide.items.length > 0 && (
+            <ul className="style-guide-panel__items">
+              {styleGuide.items.slice(0, 4).map((item) => (
+                <li key={item.label}>
+                  <span>{item.label}</span>
+                  <a href={item.shopUrl} target="_blank" rel="noopener noreferrer">Shop similar</a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -41,6 +61,7 @@ export default function Trips() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [popularWeather, setPopularWeather] = useState(null);
+  const [popularError, setPopularError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [searchBusy, setSearchBusy] = useState(false);
@@ -56,7 +77,13 @@ export default function Trips() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
 
-    api.getPopularWeather().then(setPopularWeather).catch(() => setPopularWeather([]));
+    api
+      .getPopularWeather()
+      .then(setPopularWeather)
+      .catch((err) => {
+        setPopularWeather([]);
+        setPopularError(err.message);
+      });
   }, []);
 
   async function handleWeatherSearch(e) {
@@ -211,17 +238,21 @@ export default function Trips() {
 
         {searchResult && (
           <div className="weather-grid weather-grid--result">
-            <WeatherCard name={searchResult.name} weather={searchResult.weather} />
+            <WeatherCard name={searchResult.name} weather={searchResult.weather} styleGuide={searchResult.styleGuide} />
           </div>
         )}
 
         <h3 className="weather-explorer__subheading">Popular destinations</h3>
         {!popularWeather ? (
           <p>Loading popular destinations…</p>
+        ) : popularWeather.length === 0 ? (
+          <p className="form-error">
+            {popularError || "Couldn't load popular destinations right now."}
+          </p>
         ) : (
           <div className="weather-grid">
             {popularWeather.map((entry) => (
-              <WeatherCard key={entry.name} name={entry.name} weather={entry.weather} />
+              <WeatherCard key={entry.name} name={entry.name} weather={entry.weather} styleGuide={entry.styleGuide} />
             ))}
           </div>
         )}

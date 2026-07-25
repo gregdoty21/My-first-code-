@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth } from "./auth.js";
-import { getTripWeather } from "../weather.js";
+import { getTripWeather, seasonFromWeather } from "../weather.js";
 import { getStyleGuide } from "../styleGuide.js";
 import {
   ACTIVITIES,
@@ -125,10 +125,7 @@ tripsRouter.delete("/:id", async (req, res) => {
 async function getTargetSeason(trip) {
   try {
     const weather = await getTripWeather(trip.destination, trip.start_date, trip.end_date);
-    if (weather.available) {
-      if (weather.avgHighC >= 24) return "warm"; // ~75°F
-      if (weather.avgHighC <= 13) return "cold"; // ~55°F
-    }
+    return seasonFromWeather(weather);
   } catch {
     // Weather is best-effort here; fall through with no season filter.
   }

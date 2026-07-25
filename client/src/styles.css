@@ -455,6 +455,13 @@ input, select {
 }
 .weather-card h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
 
+.weather-card__style {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+.weather-card__style h4 { margin: 0 0 0.4rem; font-size: 0.8rem; }
+
 .style-guide-panel__note {
   margin: 0 0 0.75rem;
   font-size: 0.8rem;

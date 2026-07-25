@@ -6,12 +6,27 @@
 // dates. The general (non-trip) location lookup used by the weather explorer
 // always uses the forecast API for the next few days.
 
+const FETCH_TIMEOUT_MS = 6000;
+
+// A slow/hanging Open-Meteo request shouldn't be able to hang an entire
+// endpoint that's fetching several locations at once (e.g. the "popular
+// destinations" list) — fail that one lookup fast instead.
+async function fetchWithTimeout(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function geocode(destination) {
   const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
   url.searchParams.set("name", destination);
   url.searchParams.set("count", "1");
 
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error("Geocoding lookup failed");
   const data = await res.json();
   const place = data.results?.[0];
@@ -42,7 +57,7 @@ function todayStr() {
 async function fetchDaily(baseUrl, params) {
   const url = new URL(baseUrl);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error("Weather lookup failed");
   return res.json();
 }
@@ -111,6 +126,16 @@ export async function getLocationWeather(query) {
     end_date: end.toISOString().slice(0, 10),
   });
   return summarize(place, data, "forecast");
+}
+
+// Same warm/cold thresholds used for trip wardrobe suggestions, applied to
+// any weather object with an avgHighC — lets the style guide pick a climate
+// for a place with no associated trip dates.
+export function seasonFromWeather(weather) {
+  if (!weather?.available) return null;
+  if (weather.avgHighC >= 24) return "warm";
+  if (weather.avgHighC <= 13) return "cold";
+  return null;
 }
 
 // Standard EPA/WHO UV index scale.
