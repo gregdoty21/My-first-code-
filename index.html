@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>Tasks</h1>
+      <p class="app__subtitle" id="summary">No tasks yet</p>
+    </header>
+
+    <form class="composer" id="composer" autocomplete="off">
+      <label class="visually-hidden" for="new-task">What needs doing?</label>
+      <input
+        class="composer__input"
+        id="new-task"
+        type="text"
+        placeholder="What needs doing?"
+        maxlength="200"
+        required>
+      <button class="composer__button" type="submit">Add</button>
+    </form>
+
+    <div class="filters" role="tablist" aria-label="Filter tasks">
+      <button class="filters__tab" role="tab" data-filter="all" aria-selected="true">All</button>
+      <button class="filters__tab" role="tab" data-filter="active" aria-selected="false">Active</button>
+      <button class="filters__tab" role="tab" data-filter="done" aria-selected="false">Done</button>
+    </div>
+
+    <ul class="tasks" id="tasks"></ul>
+
+    <p class="empty" id="empty" hidden></p>
+
+    <footer class="app__footer">
+      <button class="link-button" id="clear-done" type="button" hidden>Clear completed</button>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --border: #e3e6ea;
+  --text: #1b1f24;
+  --text-muted: #6b7280;
+  --accent: #3b6cf6;
+  --accent-text: #ffffff;
+  --done: #9aa3af;
+  --danger: #d64545;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171b;
+    --surface: #1c2025;
+    --border: #2c3238;
+    --text: #e8eaed;
+    --text-muted: #98a1ac;
+    --accent: #5b86f8;
+    --accent-text: #0f1216;
+    --done: #6b7480;
+    --danger: #e26a6a;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1rem 4rem;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app {
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.app__header {
+  margin-bottom: 1.5rem;
+}
+
+.app__header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.app__subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Composer -------------------------------------------------------------- */
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+  font: inherit;
+}
+
+.composer__input::placeholder {
+  color: var(--text-muted);
+}
+
+.composer__input:focus-visible,
+.composer__button:focus-visible,
+.filters__tab:focus-visible,
+.link-button:focus-visible,
+.task__title:focus-visible,
+.task__delete:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.composer__button {
+  padding: 0.7rem 1.2rem;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.composer__button:hover {
+  filter: brightness(1.06);
+}
+
+/* Filters --------------------------------------------------------------- */
+
+.filters {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.filters__tab {
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.filters__tab:hover {
+  color: var(--text);
+}
+
+.filters__tab[aria-selected="true"] {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Task list ------------------------------------------------------------- */
+
+.tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.tasks:empty {
+  display: none;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.task:first-child {
+  border-top: 0;
+}
+
+.task__checkbox {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.task__title {
+  flex: 1;
+  min-width: 0;
+  padding: 0.15rem 0.25rem;
+  margin: -0.15rem -0.25rem;
+  border: 0;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.task__title:focus {
+  background: var(--bg);
+}
+
+.task--done .task__title {
+  color: var(--done);
+  text-decoration: line-through;
+}
+
+.task__delete {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.task__delete:hover {
+  background: var(--bg);
+  color: var(--danger);
+}
+
+/* Footer / empty state -------------------------------------------------- */
+
+.empty {
+  margin: 0;
+  padding: 2rem 1rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.app__footer {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 2rem;
+  margin-top: 0.75rem;
+}
+
+.link-button {
+  padding: 0.25rem 0.4rem;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: var(--danger);
+}
