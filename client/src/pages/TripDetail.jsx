@@ -8,6 +8,7 @@ export default function TripDetail() {
   const [meta, setMeta] = useState(null);
   const [weather, setWeather] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
+  const [outfits, setOutfits] = useState(null);
   const [packing, setPacking] = useState([]);
   const [customName, setCustomName] = useState("");
   const [inspiration, setInspiration] = useState([]);
@@ -47,6 +48,10 @@ export default function TripDetail() {
       .getSuggestions(id)
       .then((s) => !cancelled && setSuggestions(s))
       .catch(() => !cancelled && setSuggestions({ targetSeason: null, suggested: [] }));
+    api
+      .getOutfits(id)
+      .then((o) => !cancelled && setOutfits(o))
+      .catch(() => !cancelled && setOutfits({ targetSeason: null, pairings: [], dresses: [] }));
 
     return () => {
       cancelled = true;
@@ -55,6 +60,12 @@ export default function TripDetail() {
 
   async function addFromWardrobe(itemId) {
     await api.addPacking(id, { wardrobe_item_id: itemId });
+    await reloadPacking();
+  }
+
+  async function addOutfitPair(top, bottom) {
+    const toAdd = [top, bottom].filter((item) => !packedIds.has(item.id));
+    await Promise.all(toAdd.map((item) => api.addPacking(id, { wardrobe_item_id: item.id })));
     await reloadPacking();
   }
 
@@ -219,6 +230,75 @@ export default function TripDetail() {
               </article>
             ))}
           </div>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Outfit ideas</h2>
+        <p className="card__subtitle">
+          Mix-and-match combinations from your wardrobe — pack fewer pieces, get more looks.
+        </p>
+        {!outfits ? (
+          <p>Building outfit ideas…</p>
+        ) : outfits.pairings.length === 0 && outfits.dresses.length === 0 ? (
+          <p className="empty">Add matching tops, bottoms, or dresses to your wardrobe to see outfit ideas.</p>
+        ) : (
+          <>
+            {outfits.pairings.map((pairing) => (
+              <div className="outfit-pairing" key={pairing.top.id}>
+                <div className="outfit-pairing__top">
+                  <img src={photoUrl(pairing.top.photo_path)} alt={pairing.top.name} />
+                  <div>
+                    <h3>{pairing.top.name}</h3>
+                    <p className="outfit-pairing__count">
+                      pairs with {pairing.bottoms.length} {pairing.bottoms.length === 1 ? "bottom" : "bottoms"} for {pairing.bottoms.length} {pairing.bottoms.length === 1 ? "look" : "looks"}
+                    </p>
+                  </div>
+                </div>
+                <div className="outfit-pairing__bottoms">
+                  {pairing.bottoms.map((bottom) => {
+                    const inList = packedIds.has(pairing.top.id) && packedIds.has(bottom.id);
+                    return (
+                      <button
+                        key={bottom.id}
+                        type="button"
+                        className="outfit-pairing__bottom"
+                        disabled={inList}
+                        onClick={() => addOutfitPair(pairing.top, bottom)}
+                        title={inList ? "Both pieces are already in your packing list" : "Add this pairing to your packing list"}
+                      >
+                        <img src={photoUrl(bottom.photo_path)} alt={bottom.name} />
+                        <span>{bottom.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {outfits.dresses.length > 0 && (
+              <div className="outfit-dresses">
+                <h3>Ready-to-wear</h3>
+                <div className="wardrobe-grid wardrobe-grid--compact">
+                  {outfits.dresses.map((dress) => (
+                    <article className="wardrobe-card" key={dress.id}>
+                      <img src={photoUrl(dress.photo_path)} alt={dress.name} />
+                      <div className="wardrobe-card__body">
+                        <h3>{dress.name}</h3>
+                        <button
+                          type="button"
+                          disabled={packedIds.has(dress.id)}
+                          onClick={() => addFromWardrobe(dress.id)}
+                        >
+                          {packedIds.has(dress.id) ? "In packing list" : "Add to packing list"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
 

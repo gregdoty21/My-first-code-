@@ -340,3 +340,53 @@ input, select {
 .inspiration-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: var(--bg); display: block; }
 .inspiration-card figcaption { padding: 0.5rem 0.6rem 0; font-size: 0.85rem; }
 .inspiration-card__remove { display: block; padding: 0.4rem 0.6rem 0.6rem; font-size: 0.8rem; }
+
+/* Outfit ideas ---------------------------------------------------------- */
+
+.outfit-pairing {
+  display: flex;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--border);
+}
+.outfit-pairing:first-child { border-top: 0; padding-top: 0; }
+
+.outfit-pairing__top {
+  flex: none;
+  width: 8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.outfit-pairing__top img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--bg);
+}
+.outfit-pairing__top h3 { margin: 0; font-size: 0.9rem; }
+.outfit-pairing__count { margin: 0.15rem 0 0; font-size: 0.78rem; color: var(--text-muted); }
+
+.outfit-pairing__bottoms {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-content: flex-start;
+}
+.outfit-pairing__bottom {
+  width: 5.5rem;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: left;
+}
+.outfit-pairing__bottom:disabled { opacity: 0.55; }
+.outfit-pairing__bottom img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: var(--bg); display: block; }
+.outfit-pairing__bottom span { display: block; padding: 0.3rem 0.4rem; font-size: 0.72rem; }
+
+.outfit-dresses { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.outfit-dresses h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }

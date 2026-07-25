@@ -136,9 +136,9 @@ tripsRouter.get("/:id/weather", async (req, res) => {
   }
 });
 
-tripsRouter.get("/:id/suggestions", async (req, res) => {
-  const trip = getOwnedTrip(req, res);
-  if (!trip) return;
+// Shared by /suggestions and /outfits: which of the user's wardrobe items fit
+// this trip's weather and planned activities.
+async function getTripRelevantItems(userId, trip) {
   const activities = JSON.parse(trip.activities);
 
   let targetSeason = null;
@@ -149,7 +149,7 @@ tripsRouter.get("/:id/suggestions", async (req, res) => {
       else if (weather.avgHighF <= 55) targetSeason = "cold";
     }
   } catch {
-    // Weather is best-effort for suggestions; fall through with no season filter.
+    // Weather is best-effort here; fall through with no season filter.
   }
 
   const desiredFormality = new Set();
@@ -159,16 +159,43 @@ tripsRouter.get("/:id/suggestions", async (req, res) => {
     (ACTIVITY_CATEGORY[activity] || []).forEach((c) => desiredCategories.add(c));
   }
 
-  const items = db
-    .prepare("SELECT * FROM wardrobe_items WHERE user_id = ?")
-    .all(req.session.userId);
+  const items = db.prepare("SELECT * FROM wardrobe_items WHERE user_id = ?").all(userId);
 
-  const suggested = items.filter((item) => {
+  const relevant = items.filter((item) => {
     const seasonOk = !targetSeason || item.season === targetSeason || item.season === "all-season";
     const specialCategory = desiredCategories.has(item.category);
     const formalityOk = desiredFormality.size === 0 || desiredFormality.has(item.formality);
     return seasonOk && (specialCategory || formalityOk);
   });
 
-  res.json({ targetSeason, suggested });
+  return { targetSeason, items: relevant };
+}
+
+tripsRouter.get("/:id/suggestions", async (req, res) => {
+  const trip = getOwnedTrip(req, res);
+  if (!trip) return;
+  const { targetSeason, items } = await getTripRelevantItems(req.session.userId, trip);
+  res.json({ targetSeason, suggested: items });
+});
+
+tripsRouter.get("/:id/outfits", async (req, res) => {
+  const trip = getOwnedTrip(req, res);
+  if (!trip) return;
+  const { targetSeason, items } = await getTripRelevantItems(req.session.userId, trip);
+
+  const tops = items.filter((i) => i.category === "Tops");
+  const bottoms = items.filter((i) => i.category === "Bottoms");
+  const dresses = items.filter((i) => i.category === "Dresses");
+
+  // Same formality only, for now — keeps pairings predictable ("casual top with
+  // casual bottom") rather than guessing at cross-formality mixing rules.
+  const pairings = tops
+    .map((top) => ({
+      top,
+      bottoms: bottoms.filter((b) => b.formality === top.formality),
+    }))
+    .filter((p) => p.bottoms.length > 0)
+    .sort((a, b) => b.bottoms.length - a.bottoms.length);
+
+  res.json({ targetSeason, pairings, dresses });
 });

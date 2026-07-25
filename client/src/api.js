@@ -39,6 +39,7 @@ export const api = {
   deleteTrip: (id) => apiFetch(`/api/trips/${id}`, { method: "DELETE" }),
   getWeather: (id) => apiFetch(`/api/trips/${id}/weather`),
   getSuggestions: (id) => apiFetch(`/api/trips/${id}/suggestions`),
+  getOutfits: (id) => apiFetch(`/api/trips/${id}/outfits`),
 
   listPacking: (tripId) => apiFetch(`/api/trips/${tripId}/packing`),
   addPacking: (tripId, body) => apiFetch(`/api/trips/${tripId}/packing`, { method: "POST", body: JSON.stringify(body) }),
