@@ -1,17 +1,18 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import session from "express-session";
+import cookieParser from "cookie-parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import "./db.js";
+import { initSchema } from "./db.js";
 import { authRouter } from "./routes/auth.js";
 import { wardrobeRouter } from "./routes/wardrobe.js";
 import { tripsRouter } from "./routes/trips.js";
 import { tripPackingRouter, packingItemRouter } from "./routes/packing.js";
 import { tripInspirationRouter, inspirationItemRouter } from "./routes/inspiration.js";
 import { metaRouter } from "./routes/meta.js";
+import { uploadsDir, ensureBucket } from "./storage.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 4000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
@@ -19,21 +20,11 @@ const app = express();
 
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "dev-secret-change-me",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    },
-  })
-);
+app.use(cookieParser());
 
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+// Only relevant when running without SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY
+// (local-disk storage fallback) — see storage.js.
+app.use("/uploads", express.static(uploadsDir));
 
 app.use("/api/auth", authRouter);
 app.use("/api/wardrobe", wardrobeRouter);
@@ -51,6 +42,14 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || "Something went wrong" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Pack app server listening on http://localhost:${PORT}`);
-});
+initSchema()
+  .then(() => ensureBucket())
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Pack app server listening on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to initialize database schema:", err);
+    process.exit(1);
+  });

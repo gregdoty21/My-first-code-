@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "../db.js";
+import { pool } from "../db.js";
 import { requireAuth } from "./auth.js";
 import { getTripWeather } from "../weather.js";
 import {
@@ -13,10 +13,6 @@ export const tripsRouter = Router();
 tripsRouter.use(requireAuth);
 
 const suitcaseIds = SUITCASE_SIZES.map((s) => s.id);
-
-function parseTrip(row) {
-  return { ...row, activities: JSON.parse(row.activities) };
-}
 
 function validateTripInput({ name, destination, start_date, end_date, activities, suitcase_size }) {
   if (!name || !destination || !start_date || !end_date) {
@@ -34,42 +30,42 @@ function validateTripInput({ name, destination, start_date, end_date, activities
   return null;
 }
 
-tripsRouter.get("/", (req, res) => {
-  const rows = db
-    .prepare("SELECT * FROM trips WHERE user_id = ? ORDER BY start_date ASC")
-    .all(req.session.userId);
-  res.json(rows.map(parseTrip));
+tripsRouter.get("/", async (req, res) => {
+  const result = await pool.query("SELECT * FROM trips WHERE user_id = $1 ORDER BY start_date ASC", [
+    req.userId,
+  ]);
+  res.json(result.rows);
 });
 
-tripsRouter.post("/", (req, res) => {
+tripsRouter.post("/", async (req, res) => {
   const { name, destination, start_date, end_date, activities = [], suitcase_size = "carry-on" } =
     req.body || {};
   const error = validateTripInput({ name, destination, start_date, end_date, activities, suitcase_size });
   if (error) return res.status(400).json({ error });
 
-  const result = db
-    .prepare(
-      `INSERT INTO trips (user_id, name, destination, start_date, end_date, activities, suitcase_size)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      req.session.userId,
+  const result = await pool.query(
+    `INSERT INTO trips (user_id, name, destination, start_date, end_date, activities, suitcase_size)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [
+      req.userId,
       name.trim(),
       destination.trim(),
       start_date,
       end_date,
       JSON.stringify(activities),
-      suitcase_size
-    );
+      suitcase_size,
+    ]
+  );
 
-  const trip = db.prepare("SELECT * FROM trips WHERE id = ?").get(result.lastInsertRowid);
-  res.status(201).json(parseTrip(trip));
+  res.status(201).json(result.rows[0]);
 });
 
-function getOwnedTrip(req, res) {
-  const trip = db
-    .prepare("SELECT * FROM trips WHERE id = ? AND user_id = ?")
-    .get(req.params.id, req.session.userId);
+async function getOwnedTrip(req, res) {
+  const result = await pool.query("SELECT * FROM trips WHERE id = $1 AND user_id = $2", [
+    req.params.id,
+    req.userId,
+  ]);
+  const trip = result.rows[0];
   if (!trip) {
     res.status(404).json({ error: "Trip not found" });
     return null;
@@ -77,14 +73,14 @@ function getOwnedTrip(req, res) {
   return trip;
 }
 
-tripsRouter.get("/:id", (req, res) => {
-  const trip = getOwnedTrip(req, res);
+tripsRouter.get("/:id", async (req, res) => {
+  const trip = await getOwnedTrip(req, res);
   if (!trip) return;
-  res.json(parseTrip(trip));
+  res.json(trip);
 });
 
-tripsRouter.patch("/:id", (req, res) => {
-  const trip = getOwnedTrip(req, res);
+tripsRouter.patch("/:id", async (req, res) => {
+  const trip = await getOwnedTrip(req, res);
   if (!trip) return;
 
   const { name, destination, start_date, end_date, activities, suitcase_size } = req.body || {};
@@ -93,37 +89,38 @@ tripsRouter.patch("/:id", (req, res) => {
     destination: destination?.trim() || trip.destination,
     start_date: start_date || trip.start_date,
     end_date: end_date || trip.end_date,
-    activities: activities !== undefined ? activities : JSON.parse(trip.activities),
+    activities: activities !== undefined ? activities : trip.activities,
     suitcase_size: suitcase_size || trip.suitcase_size,
   };
   const error = validateTripInput(merged);
   if (error) return res.status(400).json({ error });
 
-  db.prepare(
-    `UPDATE trips SET name = ?, destination = ?, start_date = ?, end_date = ?, activities = ?, suitcase_size = ?
-     WHERE id = ?`
-  ).run(
-    merged.name,
-    merged.destination,
-    merged.start_date,
-    merged.end_date,
-    JSON.stringify(merged.activities),
-    merged.suitcase_size,
-    trip.id
+  const result = await pool.query(
+    `UPDATE trips SET name = $1, destination = $2, start_date = $3, end_date = $4, activities = $5, suitcase_size = $6
+     WHERE id = $7 RETURNING *`,
+    [
+      merged.name,
+      merged.destination,
+      merged.start_date,
+      merged.end_date,
+      JSON.stringify(merged.activities),
+      merged.suitcase_size,
+      trip.id,
+    ]
   );
 
-  res.json(parseTrip(db.prepare("SELECT * FROM trips WHERE id = ?").get(trip.id)));
+  res.json(result.rows[0]);
 });
 
-tripsRouter.delete("/:id", (req, res) => {
-  const trip = getOwnedTrip(req, res);
+tripsRouter.delete("/:id", async (req, res) => {
+  const trip = await getOwnedTrip(req, res);
   if (!trip) return;
-  db.prepare("DELETE FROM trips WHERE id = ?").run(trip.id);
+  await pool.query("DELETE FROM trips WHERE id = $1", [trip.id]);
   res.status(204).end();
 });
 
 tripsRouter.get("/:id/weather", async (req, res) => {
-  const trip = getOwnedTrip(req, res);
+  const trip = await getOwnedTrip(req, res);
   if (!trip) return;
   try {
     const weather = await getTripWeather(trip.destination, trip.start_date, trip.end_date);
@@ -139,7 +136,7 @@ tripsRouter.get("/:id/weather", async (req, res) => {
 // Shared by /suggestions and /outfits: which of the user's wardrobe items fit
 // this trip's weather and planned activities.
 async function getTripRelevantItems(userId, trip) {
-  const activities = JSON.parse(trip.activities);
+  const activities = trip.activities;
 
   let targetSeason = null;
   try {
@@ -159,9 +156,9 @@ async function getTripRelevantItems(userId, trip) {
     (ACTIVITY_CATEGORY[activity] || []).forEach((c) => desiredCategories.add(c));
   }
 
-  const items = db.prepare("SELECT * FROM wardrobe_items WHERE user_id = ?").all(userId);
+  const result = await pool.query("SELECT * FROM wardrobe_items WHERE user_id = $1", [userId]);
 
-  const relevant = items.filter((item) => {
+  const relevant = result.rows.filter((item) => {
     const seasonOk = !targetSeason || item.season === targetSeason || item.season === "all-season";
     const specialCategory = desiredCategories.has(item.category);
     const formalityOk = desiredFormality.size === 0 || desiredFormality.has(item.formality);
@@ -172,16 +169,16 @@ async function getTripRelevantItems(userId, trip) {
 }
 
 tripsRouter.get("/:id/suggestions", async (req, res) => {
-  const trip = getOwnedTrip(req, res);
+  const trip = await getOwnedTrip(req, res);
   if (!trip) return;
-  const { targetSeason, items } = await getTripRelevantItems(req.session.userId, trip);
+  const { targetSeason, items } = await getTripRelevantItems(req.userId, trip);
   res.json({ targetSeason, suggested: items });
 });
 
 tripsRouter.get("/:id/outfits", async (req, res) => {
-  const trip = getOwnedTrip(req, res);
+  const trip = await getOwnedTrip(req, res);
   if (!trip) return;
-  const { targetSeason, items } = await getTripRelevantItems(req.session.userId, trip);
+  const { targetSeason, items } = await getTripRelevantItems(req.userId, trip);
 
   const tops = items.filter((i) => i.category === "Tops");
   const bottoms = items.filter((i) => i.category === "Bottoms");

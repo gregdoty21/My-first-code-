@@ -1,27 +1,12 @@
 import { Router } from "express";
 import multer from "multer";
-import path from "node:path";
-import fs from "node:fs";
-import crypto from "node:crypto";
-import { fileURLToPath } from "node:url";
-import { db } from "../db.js";
+import { pool } from "../db.js";
 import { requireAuth } from "./auth.js";
+import { saveFile, deleteFile } from "../storage.js";
 import { CATEGORIES, SEASONS, FORMALITY } from "../constants.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.join(__dirname, "..", "..", "uploads");
-fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: uploadsDir,
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${crypto.randomUUID()}${ext}`);
-  },
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(file.mimetype)) {
@@ -41,87 +26,86 @@ function validateTags({ category, season, formality }) {
   return null;
 }
 
-wardrobeRouter.get("/", (req, res) => {
+wardrobeRouter.get("/", async (req, res) => {
   const { category } = req.query;
-  let rows;
-  if (category) {
-    rows = db
-      .prepare("SELECT * FROM wardrobe_items WHERE user_id = ? AND category = ? ORDER BY created_at DESC")
-      .all(req.session.userId, category);
-  } else {
-    rows = db
-      .prepare("SELECT * FROM wardrobe_items WHERE user_id = ? ORDER BY created_at DESC")
-      .all(req.session.userId);
-  }
-  res.json(rows);
+  const result = category
+    ? await pool.query(
+        "SELECT * FROM wardrobe_items WHERE user_id = $1 AND category = $2 ORDER BY created_at DESC",
+        [req.userId, category]
+      )
+    : await pool.query("SELECT * FROM wardrobe_items WHERE user_id = $1 ORDER BY created_at DESC", [
+        req.userId,
+      ]);
+  res.json(result.rows);
 });
 
-wardrobeRouter.post("/", upload.single("photo"), (req, res) => {
+wardrobeRouter.post("/", upload.single("photo"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "A photo is required" });
   }
   const { name, category, color, season, formality } = req.body || {};
   if (!name || !category) {
-    fs.unlink(req.file.path, () => {});
     return res.status(400).json({ error: "Name and category are required" });
   }
   const error = validateTags({ category, season, formality });
-  if (error) {
-    fs.unlink(req.file.path, () => {});
-    return res.status(400).json({ error });
-  }
+  if (error) return res.status(400).json({ error });
 
-  const result = db
-    .prepare(
-      `INSERT INTO wardrobe_items (user_id, photo_path, name, category, color, season, formality)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      req.session.userId,
-      `/uploads/${req.file.filename}`,
+  const photoPath = await saveFile(req.file.buffer, req.file.originalname, req.file.mimetype);
+
+  const result = await pool.query(
+    `INSERT INTO wardrobe_items (user_id, photo_path, name, category, color, season, formality)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [
+      req.userId,
+      photoPath,
       name.trim(),
       category,
       (color || "").trim(),
       season || "all-season",
-      formality || "casual"
-    );
+      formality || "casual",
+    ]
+  );
 
-  const item = db.prepare("SELECT * FROM wardrobe_items WHERE id = ?").get(result.lastInsertRowid);
-  res.status(201).json(item);
+  res.status(201).json(result.rows[0]);
 });
 
-wardrobeRouter.patch("/:id", (req, res) => {
-  const item = db
-    .prepare("SELECT * FROM wardrobe_items WHERE id = ? AND user_id = ?")
-    .get(req.params.id, req.session.userId);
+wardrobeRouter.patch("/:id", async (req, res) => {
+  const existing = await pool.query("SELECT * FROM wardrobe_items WHERE id = $1 AND user_id = $2", [
+    req.params.id,
+    req.userId,
+  ]);
+  const item = existing.rows[0];
   if (!item) return res.status(404).json({ error: "Item not found" });
 
   const { name, category, color, season, formality } = req.body || {};
   const error = validateTags({ category, season, formality });
   if (error) return res.status(400).json({ error });
 
-  db.prepare(
-    `UPDATE wardrobe_items SET name = ?, category = ?, color = ?, season = ?, formality = ? WHERE id = ?`
-  ).run(
-    name?.trim() || item.name,
-    category || item.category,
-    color !== undefined ? color.trim() : item.color,
-    season || item.season,
-    formality || item.formality,
-    item.id
+  const result = await pool.query(
+    `UPDATE wardrobe_items SET name = $1, category = $2, color = $3, season = $4, formality = $5
+     WHERE id = $6 RETURNING *`,
+    [
+      name?.trim() || item.name,
+      category || item.category,
+      color !== undefined ? color.trim() : item.color,
+      season || item.season,
+      formality || item.formality,
+      item.id,
+    ]
   );
 
-  res.json(db.prepare("SELECT * FROM wardrobe_items WHERE id = ?").get(item.id));
+  res.json(result.rows[0]);
 });
 
-wardrobeRouter.delete("/:id", (req, res) => {
-  const item = db
-    .prepare("SELECT * FROM wardrobe_items WHERE id = ? AND user_id = ?")
-    .get(req.params.id, req.session.userId);
+wardrobeRouter.delete("/:id", async (req, res) => {
+  const existing = await pool.query("SELECT * FROM wardrobe_items WHERE id = $1 AND user_id = $2", [
+    req.params.id,
+    req.userId,
+  ]);
+  const item = existing.rows[0];
   if (!item) return res.status(404).json({ error: "Item not found" });
 
-  db.prepare("DELETE FROM wardrobe_items WHERE id = ?").run(item.id);
-  const filePath = path.join(uploadsDir, path.basename(item.photo_path));
-  fs.unlink(filePath, () => {});
+  await pool.query("DELETE FROM wardrobe_items WHERE id = $1", [item.id]);
+  await deleteFile(item.photo_path);
   res.status(204).end();
 });

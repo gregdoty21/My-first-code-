@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "../db.js";
+import { pool } from "../db.js";
 import { requireAuth } from "./auth.js";
 
 // Mounted separately (at /api/trips and /api/packing respectively) instead of
@@ -11,26 +11,40 @@ tripPackingRouter.use(requireAuth);
 export const packingItemRouter = Router();
 packingItemRouter.use(requireAuth);
 
-function ownedTrip(req, tripId) {
-  return db.prepare("SELECT * FROM trips WHERE id = ? AND user_id = ?").get(tripId, req.session.userId);
+async function ownedTrip(req, tripId) {
+  const result = await pool.query("SELECT * FROM trips WHERE id = $1 AND user_id = $2", [
+    tripId,
+    req.userId,
+  ]);
+  return result.rows[0];
 }
 
-const listQuery = `
-  SELECT
-    packing_items.id,
-    packing_items.trip_id,
-    packing_items.wardrobe_item_id,
-    packing_items.custom_name,
-    packing_items.packed,
-    packing_items.created_at,
-    wardrobe_items.name AS wardrobe_name,
-    wardrobe_items.photo_path AS wardrobe_photo_path,
-    wardrobe_items.category AS wardrobe_category
-  FROM packing_items
-  LEFT JOIN wardrobe_items ON wardrobe_items.id = packing_items.wardrobe_item_id
-  WHERE packing_items.trip_id = ?
-  ORDER BY packing_items.created_at ASC
+const SELECT_COLUMNS = `
+  packing_items.id,
+  packing_items.trip_id,
+  packing_items.wardrobe_item_id,
+  packing_items.custom_name,
+  packing_items.packed,
+  packing_items.created_at,
+  wardrobe_items.name AS wardrobe_name,
+  wardrobe_items.photo_path AS wardrobe_photo_path,
+  wardrobe_items.category AS wardrobe_category
+FROM packing_items
+LEFT JOIN wardrobe_items ON wardrobe_items.id = packing_items.wardrobe_item_id
 `;
+
+async function listForTrip(tripId) {
+  const result = await pool.query(
+    `SELECT ${SELECT_COLUMNS} WHERE packing_items.trip_id = $1 ORDER BY packing_items.created_at ASC`,
+    [tripId]
+  );
+  return result.rows;
+}
+
+async function findById(id) {
+  const result = await pool.query(`SELECT ${SELECT_COLUMNS} WHERE packing_items.id = $1`, [id]);
+  return result.rows[0];
+}
 
 function shape(row) {
   return {
@@ -47,16 +61,16 @@ function shape(row) {
 }
 
 // GET /api/trips/:tripId/packing
-tripPackingRouter.get("/:tripId/packing", (req, res) => {
-  const trip = ownedTrip(req, req.params.tripId);
+tripPackingRouter.get("/:tripId/packing", async (req, res) => {
+  const trip = await ownedTrip(req, req.params.tripId);
   if (!trip) return res.status(404).json({ error: "Trip not found" });
-  const rows = db.prepare(listQuery).all(trip.id);
+  const rows = await listForTrip(trip.id);
   res.json(rows.map(shape));
 });
 
 // POST /api/trips/:tripId/packing  { wardrobe_item_id } or { custom_name }
-tripPackingRouter.post("/:tripId/packing", (req, res) => {
-  const trip = ownedTrip(req, req.params.tripId);
+tripPackingRouter.post("/:tripId/packing", async (req, res) => {
+  const trip = await ownedTrip(req, req.params.tripId);
   if (!trip) return res.status(404).json({ error: "Trip not found" });
 
   const { wardrobe_item_id, custom_name } = req.body || {};
@@ -65,53 +79,51 @@ tripPackingRouter.post("/:tripId/packing", (req, res) => {
   }
 
   if (wardrobe_item_id) {
-    const item = db
-      .prepare("SELECT id FROM wardrobe_items WHERE id = ? AND user_id = ?")
-      .get(wardrobe_item_id, req.session.userId);
-    if (!item) return res.status(404).json({ error: "Wardrobe item not found" });
+    const owned = await pool.query("SELECT id FROM wardrobe_items WHERE id = $1 AND user_id = $2", [
+      wardrobe_item_id,
+      req.userId,
+    ]);
+    if (!owned.rows[0]) return res.status(404).json({ error: "Wardrobe item not found" });
   }
 
-  const result = db
-    .prepare("INSERT INTO packing_items (trip_id, wardrobe_item_id, custom_name) VALUES (?, ?, ?)")
-    .run(trip.id, wardrobe_item_id || null, wardrobe_item_id ? null : custom_name.trim());
-
-  const row = db.prepare(listQuery.replace("WHERE packing_items.trip_id = ?", "WHERE packing_items.id = ?")).get(
-    result.lastInsertRowid
+  const inserted = await pool.query(
+    "INSERT INTO packing_items (trip_id, wardrobe_item_id, custom_name) VALUES ($1, $2, $3) RETURNING id",
+    [trip.id, wardrobe_item_id || null, wardrobe_item_id ? null : custom_name.trim()]
   );
+
+  const row = await findById(inserted.rows[0].id);
   res.status(201).json(shape(row));
 });
 
 // PATCH /api/packing/:id  { packed }
-packingItemRouter.patch("/:id", (req, res) => {
-  const row = db
-    .prepare(
-      `SELECT packing_items.* FROM packing_items
-       JOIN trips ON trips.id = packing_items.trip_id
-       WHERE packing_items.id = ? AND trips.user_id = ?`
-    )
-    .get(req.params.id, req.session.userId);
-  if (!row) return res.status(404).json({ error: "Packing item not found" });
-
-  const packed = req.body?.packed ? 1 : 0;
-  db.prepare("UPDATE packing_items SET packed = ? WHERE id = ?").run(packed, row.id);
-
-  const updated = db.prepare(listQuery.replace("WHERE packing_items.trip_id = ?", "WHERE packing_items.id = ?")).get(
-    row.id
+packingItemRouter.patch("/:id", async (req, res) => {
+  const owned = await pool.query(
+    `SELECT packing_items.id FROM packing_items
+     JOIN trips ON trips.id = packing_items.trip_id
+     WHERE packing_items.id = $1 AND trips.user_id = $2`,
+    [req.params.id, req.userId]
   );
+  if (!owned.rows[0]) return res.status(404).json({ error: "Packing item not found" });
+
+  await pool.query("UPDATE packing_items SET packed = $1 WHERE id = $2", [
+    Boolean(req.body?.packed),
+    req.params.id,
+  ]);
+
+  const updated = await findById(req.params.id);
   res.json(shape(updated));
 });
 
 // DELETE /api/packing/:id
-packingItemRouter.delete("/:id", (req, res) => {
-  const row = db
-    .prepare(
-      `SELECT packing_items.* FROM packing_items
-       JOIN trips ON trips.id = packing_items.trip_id
-       WHERE packing_items.id = ? AND trips.user_id = ?`
-    )
-    .get(req.params.id, req.session.userId);
-  if (!row) return res.status(404).json({ error: "Packing item not found" });
+packingItemRouter.delete("/:id", async (req, res) => {
+  const owned = await pool.query(
+    `SELECT packing_items.id FROM packing_items
+     JOIN trips ON trips.id = packing_items.trip_id
+     WHERE packing_items.id = $1 AND trips.user_id = $2`,
+    [req.params.id, req.userId]
+  );
+  if (!owned.rows[0]) return res.status(404).json({ error: "Packing item not found" });
 
-  db.prepare("DELETE FROM packing_items WHERE id = ?").run(row.id);
+  await pool.query("DELETE FROM packing_items WHERE id = $1", [req.params.id]);
   res.status(204).end();
 });

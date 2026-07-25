@@ -57,5 +57,9 @@ export const api = {
 
 export function photoUrl(path) {
   if (!path) return null;
+  // Already a full URL (Supabase Storage in production) vs. a same-origin
+  // "/uploads/..." path (local-disk fallback in dev) that needs the API's
+  // origin prefixed on.
+  if (/^https?:\/\//.test(path)) return path;
   return `${API_BASE}${path}`;
 }

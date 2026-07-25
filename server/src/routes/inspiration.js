@@ -1,26 +1,11 @@
 import { Router } from "express";
 import multer from "multer";
-import path from "node:path";
-import fs from "node:fs";
-import crypto from "node:crypto";
-import { fileURLToPath } from "node:url";
-import { db } from "../db.js";
+import { pool } from "../db.js";
 import { requireAuth } from "./auth.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.join(__dirname, "..", "..", "uploads");
-fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: uploadsDir,
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${crypto.randomUUID()}${ext}`);
-  },
-});
+import { saveFile, deleteFile } from "../storage.js";
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!/^image\/(jpeg|png|webp|heic|heif|gif)$/.test(file.mimetype)) {
@@ -44,36 +29,37 @@ function isValidImageUrl(value) {
 export const tripInspirationRouter = Router();
 tripInspirationRouter.use(requireAuth);
 
-function ownedTrip(req, tripId) {
-  return db.prepare("SELECT * FROM trips WHERE id = ? AND user_id = ?").get(tripId, req.session.userId);
+async function ownedTrip(req, tripId) {
+  const result = await pool.query("SELECT * FROM trips WHERE id = $1 AND user_id = $2", [
+    tripId,
+    req.userId,
+  ]);
+  return result.rows[0];
 }
 
-tripInspirationRouter.get("/:tripId/inspiration", (req, res) => {
-  const trip = ownedTrip(req, req.params.tripId);
+tripInspirationRouter.get("/:tripId/inspiration", async (req, res) => {
+  const trip = await ownedTrip(req, req.params.tripId);
   if (!trip) return res.status(404).json({ error: "Trip not found" });
-  const rows = db
-    .prepare("SELECT * FROM inspiration_images WHERE trip_id = ? ORDER BY created_at DESC")
-    .all(trip.id);
-  res.json(rows);
+  const result = await pool.query(
+    "SELECT * FROM inspiration_images WHERE trip_id = $1 ORDER BY created_at DESC",
+    [trip.id]
+  );
+  res.json(result.rows);
 });
 
-tripInspirationRouter.post("/:tripId/inspiration", upload.single("photo"), (req, res) => {
-  const trip = ownedTrip(req, req.params.tripId);
-  if (!trip) {
-    if (req.file) fs.unlink(req.file.path, () => {});
-    return res.status(404).json({ error: "Trip not found" });
-  }
+tripInspirationRouter.post("/:tripId/inspiration", upload.single("photo"), async (req, res) => {
+  const trip = await ownedTrip(req, req.params.tripId);
+  if (!trip) return res.status(404).json({ error: "Trip not found" });
 
   const { image_url, caption } = req.body || {};
 
   if (req.file && image_url) {
-    fs.unlink(req.file.path, () => {});
     return res.status(400).json({ error: "Provide either an uploaded photo or an image URL, not both" });
   }
 
   let imagePath = null;
   if (req.file) {
-    imagePath = `/uploads/${req.file.filename}`;
+    imagePath = await saveFile(req.file.buffer, req.file.originalname, req.file.mimetype);
   } else if (image_url) {
     if (!isValidImageUrl(image_url)) {
       return res.status(400).json({ error: "That doesn't look like a valid image URL" });
@@ -82,33 +68,28 @@ tripInspirationRouter.post("/:tripId/inspiration", upload.single("photo"), (req,
     return res.status(400).json({ error: "Provide either a photo upload or an image URL" });
   }
 
-  const result = db
-    .prepare(
-      "INSERT INTO inspiration_images (trip_id, image_path, image_url, caption) VALUES (?, ?, ?, ?)"
-    )
-    .run(trip.id, imagePath, imagePath ? null : image_url.trim(), (caption || "").trim() || null);
+  const result = await pool.query(
+    "INSERT INTO inspiration_images (trip_id, image_path, image_url, caption) VALUES ($1, $2, $3, $4) RETURNING *",
+    [trip.id, imagePath, imagePath ? null : image_url.trim(), (caption || "").trim() || null]
+  );
 
-  const row = db.prepare("SELECT * FROM inspiration_images WHERE id = ?").get(result.lastInsertRowid);
-  res.status(201).json(row);
+  res.status(201).json(result.rows[0]);
 });
 
 export const inspirationItemRouter = Router();
 inspirationItemRouter.use(requireAuth);
 
-inspirationItemRouter.delete("/:id", (req, res) => {
-  const row = db
-    .prepare(
-      `SELECT inspiration_images.* FROM inspiration_images
-       JOIN trips ON trips.id = inspiration_images.trip_id
-       WHERE inspiration_images.id = ? AND trips.user_id = ?`
-    )
-    .get(req.params.id, req.session.userId);
+inspirationItemRouter.delete("/:id", async (req, res) => {
+  const existing = await pool.query(
+    `SELECT inspiration_images.* FROM inspiration_images
+     JOIN trips ON trips.id = inspiration_images.trip_id
+     WHERE inspiration_images.id = $1 AND trips.user_id = $2`,
+    [req.params.id, req.userId]
+  );
+  const row = existing.rows[0];
   if (!row) return res.status(404).json({ error: "Image not found" });
 
-  db.prepare("DELETE FROM inspiration_images WHERE id = ?").run(row.id);
-  if (row.image_path) {
-    const filePath = path.join(uploadsDir, path.basename(row.image_path));
-    fs.unlink(filePath, () => {});
-  }
+  await pool.query("DELETE FROM inspiration_images WHERE id = $1", [row.id]);
+  await deleteFile(row.image_path);
   res.status(204).end();
 });
