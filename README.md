@@ -1,4 +1,4 @@
-# Pack
+# PackRat
 
 A trip-packing app built around your actual wardrobe: photograph what you own,
 plan a trip, and get packing suggestions pulled from your own closet instead

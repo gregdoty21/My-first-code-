@@ -20,7 +20,7 @@ function Nav() {
 
   return (
     <nav className="nav">
-      <Link className="nav__brand" to="/wardrobe">Pack</Link>
+      <Link className="nav__brand" to="/wardrobe">PackRat</Link>
       <div className="nav__links">
         <Link to="/wardrobe">Wardrobe</Link>
         <Link to="/trips">Trips</Link>
