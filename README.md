@@ -28,7 +28,10 @@ This is **Phase 1** of a larger vision (see Roadmap below).
 - **Rat's Assistance** — upload a photo of yourself and virtually try on a
   piece from your wardrobe, powered by Google's Gemini image model. Optional:
   the rest of the app works without it, this feature just shows a friendly
-  message until a `GEMINI_API_KEY` is configured (see Deployment below).
+  message until a `GEMINI_API_KEY` is configured (see Deployment below). A
+  chat widget in the bottom-right corner lets you talk to Rat, PackRat's
+  mascot, about a generated look — fit, color coordination, contrast — always
+  framed kindly. Uses the same `GEMINI_API_KEY`.
 - **My Fashion Profile** — a settings page (via the dropdown next to your
   name in the nav) where you can tag your interests and style vibe, note a
   favorite drink/colors, write a short bio, and add photos that help capture

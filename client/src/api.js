@@ -69,6 +69,9 @@ export const api = {
   updateProfile: (body) => apiFetch("/api/profile", { method: "PUT", body: JSON.stringify(body) }),
   addProfilePhoto: (formData) => apiFetch("/api/profile/photos", { method: "POST", body: formData }),
   deleteProfilePhoto: (id) => apiFetch(`/api/profile/photos/${id}`, { method: "DELETE" }),
+
+  getChatConfig: () => apiFetch("/api/chat/configured"),
+  sendChatMessage: (body) => apiFetch("/api/chat", { method: "POST", body: JSON.stringify(body) }),
 };
 
 export function photoUrl(path) {

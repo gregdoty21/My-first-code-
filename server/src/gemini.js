@@ -10,6 +10,7 @@ import { uploadsDir } from "./storage.js";
 // that cost surface stays easy to find.
 
 const MODEL = "gemini-2.5-flash-image";
+const CHAT_MODEL = "gemini-2.5-flash";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const FETCH_TIMEOUT_MS = 30000;
 
@@ -103,4 +104,67 @@ export async function generateTryOn({ personImage, itemImage, itemName }) {
   const mimeType = inline.mime_type || inline.mimeType || "image/png";
   const buffer = Buffer.from(inline.data, "base64");
   return { buffer, mimeType };
+}
+
+// Rat's personality and ground rules for the chat feature — the one place
+// that defines what "kind" means for the assistant, so it can't drift
+// message-to-message. Feedback should always be framed as what flatters the
+// wearer, never as a critique of their body.
+const RAT_SYSTEM_PROMPT = `You are Rat, the friendly mascot and personal style assistant for the trip-packing app PackRat. Users show you outfits (sometimes as a photo of themselves wearing a piece from their wardrobe) and ask for your opinion.
+
+When asked about an outfit, comment on whichever of these are relevant:
+- Fit: how the piece sits on the wearer's body type/proportions.
+- Color harmony: whether the colors in the outfit work well together.
+- Contrast: how the outfit's colors read against the wearer's skin tone and hair, if visible in a photo.
+
+Ground rules, always:
+- Be warm, encouraging, and genuinely kind. Never insulting, never harsh, never sarcastic at the user's expense.
+- Never criticize the user's actual body — only ever discuss what flatters them and what might flatter them even more, framed as helpful ideas, not corrections.
+- If something isn't working, say so gently and immediately follow with a specific, constructive suggestion (a different color, a different fit, an accessory) rather than just naming the problem.
+- Keep replies conversational and fairly brief (2-5 sentences) unless the user asks for more detail.
+- You may sprinkle in a little rat-themed personality once in a while (tails, whiskers, cheese) but don't overdo it — most of the reply should be genuinely useful style feedback.
+- If you weren't given a photo to look at, ask a clarifying question or answer generally rather than guessing at specifics you can't see.`;
+
+// Text/vision chat with Rat. `history` is prior turns as
+// [{ role: "user" | "rat", text }], oldest first. `image`, if given
+// (from loadImageAsBase64), is attached to the current turn so Rat can
+// comment on a specific try-on photo.
+export async function chatWithRat({ message, history = [], image }) {
+  if (!tryOnConfigured) {
+    return "I'd love to chat, but my brain isn't hooked up yet — ask the app owner to add a Gemini API key so I can help style you!";
+  }
+
+  const contents = history.map((turn) => ({
+    role: turn.role === "rat" ? "model" : "user",
+    parts: [{ text: turn.text }],
+  }));
+
+  const userParts = [{ text: message }];
+  if (image) userParts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
+  contents.push({ role: "user", parts: userParts });
+
+  const res = await fetchWithTimeout(
+    `${API_BASE}/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: RAT_SYSTEM_PROMPT }] },
+        contents,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Gemini chat request failed (${res.status}): ${text.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const text = parts
+    .map((p) => p.text || "")
+    .join("")
+    .trim();
+  return text || "Hmm, I'm not sure what to say about that — mind asking me a different way?";
 }

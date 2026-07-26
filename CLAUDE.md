@@ -123,6 +123,28 @@ collection step for a future personality-aware outfit builder.
   `App.jsx`), which also now hosts "Sign out" (moved out of the main nav
   bar). Not yet consumed by any suggestion/outfit logic — that wiring is
   future work, not built yet.
+- **Rat chat widget** (`server/src/routes/chat.js`, `chatWithRat()` in
+  `server/src/gemini.js`, `client/src/components/RatMascot.jsx` +
+  `RatChatWidget.jsx`): a floating chat launcher fixed to the bottom-right
+  corner of the Rat's Assistance page. Uses `gemini-2.5-flash` (text/vision,
+  not the image model) with a `system_instruction` (`RAT_SYSTEM_PROMPT`) that
+  hard-codes "always kind" — never criticize the user's body, always frame
+  feedback as what flatters them. Optionally grounded on a specific try-on
+  result's photo: clicking "Ask Rat about this look" on a result card sets
+  `RatChatWidget`'s `context` prop (`{ id, label }`), which the client sends
+  as `tryon_result_id`; the route loads that image server-side via
+  `loadImageAsBase64()` and attaches it to the current turn so Rat can
+  actually see fit/color/contrast. Chat history is **not persisted** —
+  it's kept in React state only, resent in full (minus images) on each
+  request; this was a deliberate scope cut, not an oversight. Gated on the
+  same `GEMINI_API_KEY`/`tryOnConfigured` flag as virtual try-on; without a
+  key, `chatWithRat()` returns a canned in-character "brain isn't hooked up
+  yet" reply instead of erroring, so the widget still works end-to-end with
+  no key configured (this is how it's tested locally in this sandbox).
+  `RatMascot.jsx` is a converted version of a user-supplied HTML/SVG mascot
+  design (idle/thinking/talking/wave states via a `state` prop toggling CSS
+  classes); its CSS lives in `styles.css` scoped under `.rat-mascot` to avoid
+  colliding with short class names like `.ear`/`.eye`/`.dots`.
 
 ## Key files map
 
@@ -133,10 +155,11 @@ collection step for a future personality-aware outfit builder.
 | `server/src/storage.js` | Local disk vs. Supabase Storage abstraction |
 | `server/src/weather.js` | Open-Meteo lookups, Celsius, UV/precip labels |
 | `server/src/styleGuide.js` | Sunscreen/accessory suggestions + cultural notes |
-| `server/src/gemini.js` | Gemini virtual try-on client |
-| `server/src/routes/*.js` | One router file per resource (auth, wardrobe, trips, packing, inspiration, weather, meta, tryon, profile) |
+| `server/src/gemini.js` | Gemini virtual try-on client + Rat chat (`chatWithRat`) |
+| `server/src/routes/*.js` | One router file per resource (auth, wardrobe, trips, packing, inspiration, weather, meta, tryon, profile, chat) |
 | `client/src/api.js` | All frontend↔backend fetch calls in one place |
 | `client/src/pages/*.jsx` | One page per route (Login, Register, Wardrobe, Trips, TripDetail, TryOn, FashionProfile) |
+| `client/src/components/*.jsx` | Reusable pieces (`RatMascot`, `RatChatWidget`) shared across pages |
 | `client/src/styles.css` | All CSS, organized by section with comments |
 | `render.yaml` | Render Blueprint (both services + env var list) |
 | `README.md` | User-facing setup/deployment guide + roadmap |

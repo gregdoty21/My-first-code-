@@ -14,6 +14,7 @@ import { metaRouter } from "./routes/meta.js";
 import { weatherRouter } from "./routes/weather.js";
 import { tryonRouter } from "./routes/tryon.js";
 import { profileRouter } from "./routes/profile.js";
+import { chatRouter } from "./routes/chat.js";
 import { uploadsDir, ensureBucket } from "./storage.js";
 
 const PORT = process.env.PORT || 4000;
@@ -40,6 +41,7 @@ app.use("/api/meta", metaRouter);
 app.use("/api/weather", weatherRouter);
 app.use("/api/tryon", tryonRouter);
 app.use("/api/profile", profileRouter);
+app.use("/api/chat", chatRouter);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

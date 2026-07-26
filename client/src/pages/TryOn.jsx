@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, photoUrl } from "../api.js";
+import RatChatWidget from "../components/RatChatWidget.jsx";
 
 export default function TryOn() {
   const [configured, setConfigured] = useState(true);
@@ -13,6 +14,13 @@ export default function TryOn() {
   const [generateBusy, setGenerateBusy] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [ratContext, setRatContext] = useState(null);
+  const [ratFocusToken, setRatFocusToken] = useState(0);
+
+  function askRatAbout(result) {
+    setRatContext({ id: result.id, label: result.item_name });
+    setRatFocusToken((t) => t + 1);
+  }
 
   useEffect(() => {
     Promise.all([api.getTryonConfig(), api.listTryonPhotos(), api.listWardrobe(), api.listTryonResults()])
@@ -68,6 +76,7 @@ export default function TryOn() {
     try {
       const result = await api.generateTryon({ tryon_photo_id: selectedPhoto, wardrobe_item_id: selectedItem });
       setResults((prev) => [result, ...prev]);
+      setRatContext({ id: result.id, label: result.item_name });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -168,15 +177,20 @@ export default function TryOn() {
                 <img src={photoUrl(result.result_image_path)} alt={result.item_name} />
                 <div className="tryon-result-card__body">
                   <h3>{result.item_name}</h3>
-                  <button type="button" className="link-button" onClick={() => handleDeleteResult(result.id)}>
-                    Remove
-                  </button>
+                  <div className="tryon-result-card__actions">
+                    <button type="button" onClick={() => askRatAbout(result)}>Ask Rat about this look</button>
+                    <button type="button" className="link-button" onClick={() => handleDeleteResult(result.id)}>
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
           </div>
         )}
       </section>
+
+      <RatChatWidget context={ratContext} focusToken={ratFocusToken} />
     </div>
   );
 }

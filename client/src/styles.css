@@ -754,8 +754,17 @@ input, select {
   overflow: hidden;
 }
 .tryon-result-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: var(--surface); }
-.tryon-result-card__body { padding: 0.6rem 0.7rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.tryon-result-card__body { padding: 0.6rem 0.7rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .tryon-result-card__body h3 { margin: 0; font-size: 0.9rem; }
+.tryon-result-card__actions { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.tryon-result-card__actions button[type="button"]:not(.link-button) {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
 .outfit-dresses h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }
 
 /* My Fashion Profile ------------------------------------------------------- */
@@ -819,3 +828,235 @@ input, select {
 }
 .profile-form__actions button:disabled { opacity: 0.55; cursor: default; }
 .profile-form__saved { color: var(--accent); font-size: 0.85rem; font-weight: 600; }
+
+/* Rat mascot ---------------------------------------------------------------
+   Idle/thinking/talking/wave states, driven by the `.rt.<state>` class React
+   sets via the `state` prop on <RatMascot>. All selectors are scoped under
+   .rat-mascot so these short class names (.ear, .eye, .dots, ...) can't leak
+   into or collide with the rest of the app's CSS. ------------------------- */
+
+.rat-mascot { line-height: 0; }
+.rat-mascot g { transform-box: fill-box; transform-origin: center; }
+
+.rat-mascot .bob { animation: rat-bob 3.2s ease-in-out infinite; }
+@keyframes rat-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(-1.5deg); }
+}
+
+.rat-mascot .eye { animation: rat-blink 4.6s infinite; }
+.rat-mascot .eyeR { animation-delay: 0.07s; }
+@keyframes rat-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.08); }
+}
+
+.rat-mascot .ear { transform-origin: bottom center; animation: rat-tw 3.2s ease-in-out infinite; }
+.rat-mascot .earL { transform-origin: bottom right; }
+.rat-mascot .earR { transform-origin: bottom left; animation-delay: 0.4s; }
+@keyframes rat-tw {
+  0%, 100% { transform: rotate(0deg); }
+  55% { transform: rotate(5deg); }
+}
+
+.rat-mascot .tuft { transform-origin: bottom center; animation: rat-sway 2.8s ease-in-out infinite; }
+@keyframes rat-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+.rat-mascot .wh { animation: rat-wg 2.4s ease-in-out infinite; }
+@keyframes rat-wg {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}
+
+.rat-mascot .pawR { transform-origin: bottom center; }
+.rat-mascot .mouth, .rat-mascot .tongue { transform-box: fill-box; transform-origin: top center; }
+
+.rat-mascot.rt.talking .mouth, .rat-mascot.rt.talking .tongue {
+  animation: rat-talk 0.26s ease-in-out infinite alternate;
+}
+@keyframes rat-talk {
+  from { transform: scaleY(0.35); }
+  to { transform: scaleY(1.15); }
+}
+
+.rat-mascot.rt.thinking .eyeG { transform: translateY(-6px); }
+.rat-mascot.rt.thinking .mouth { transform: scaleY(0.3); }
+.rat-mascot.rt.thinking .dots { opacity: 1; }
+.rat-mascot.rt.thinking .d1 { animation: rat-dot 0.9s infinite; }
+.rat-mascot.rt.thinking .d2 { animation: rat-dot 0.9s 0.15s infinite; }
+.rat-mascot.rt.thinking .d3 { animation: rat-dot 0.9s 0.3s infinite; }
+@keyframes rat-dot {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-6px); opacity: 1; }
+}
+
+.rat-mascot.rt.wave .pawR { animation: rat-wave 0.5s ease-in-out infinite; }
+@keyframes rat-wave {
+  0%, 100% { transform: rotate(-18deg) translateY(-6px); }
+  50% { transform: rotate(18deg) translateY(-10px); }
+}
+.rat-mascot.rt.wave .eyeR { animation: rat-winkR 1.6s infinite; }
+@keyframes rat-winkR {
+  0%, 55%, 100% { transform: scaleY(1); }
+  70%, 85% { transform: scaleY(0.08); }
+}
+
+.rat-mascot .dots { transition: opacity 0.2s; }
+
+/* Rat chat widget ----------------------------------------------------------
+   Fixed to the bottom-right corner of whatever page mounts it (currently
+   Rat's Assistance). ---------------------------------------------------- */
+
+.rat-chat {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.rat-chat__launcher {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  box-shadow: var(--shadow);
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.rat-chat__launcher .rat-mascot { width: 100%; }
+
+.rat-chat__panel {
+  width: 22rem;
+  max-width: calc(100vw - 2rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rat-chat__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--accent-soft);
+}
+.rat-chat__header-mascot { width: 3rem; flex-shrink: 0; }
+.rat-chat__header-text { flex: 1; }
+.rat-chat__header-text strong { display: block; font-size: 0.95rem; color: var(--text); }
+.rat-chat__header-text p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+.rat-chat__close {
+  background: none;
+  border: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--text-muted);
+  padding: 0.2rem 0.4rem;
+}
+.rat-chat__close:hover { color: var(--danger); }
+
+.rat-chat__context {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.rat-chat__notice {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--danger);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.rat-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 10rem;
+  max-height: 18rem;
+}
+
+.rat-chat__bubble {
+  padding: 0.5rem 0.7rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  max-width: 85%;
+}
+.rat-chat__bubble--rat {
+  align-self: flex-start;
+  background: var(--accent-soft);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+.rat-chat__bubble--user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-bottom-right-radius: 4px;
+}
+.rat-chat__bubble--typing { font-weight: 700; letter-spacing: 0.15em; }
+
+.rat-chat__quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0 0.75rem 0.6rem;
+}
+.rat-chat__quick button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+.rat-chat__quick button:hover { border-color: var(--accent); color: var(--accent); }
+.rat-chat__quick button:disabled { opacity: 0.5; cursor: default; }
+
+.rat-chat__input-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.rat-chat__input-row input {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+}
+.rat-chat__input-row button {
+  padding: 0.5rem 0.9rem;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 0;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.rat-chat__input-row button:disabled { opacity: 0.5; cursor: default; }
